@@ -30,7 +30,7 @@ DATA_YAML = 'configs/dmd_rgb.yaml'
 def train_single(model_name, seed, data_yaml, project_dir, device=0):
     """Train one model with one seed. Returns path to best weights."""
     model = YOLO(f'{model_name}.pt')
-    model.train(
+    results = model.train(
         data=data_yaml,
         epochs=EPOCHS,
         batch=BATCH,
@@ -38,18 +38,33 @@ def train_single(model_name, seed, data_yaml, project_dir, device=0):
         patience=0,
         amp=True,
         seed=seed,
-        project=str(project_dir),
+        project=str(Path(project_dir).resolve()),
         name=f'seed_{seed}',
         exist_ok=True,
         device=device,
     )
-    best_pt = Path(project_dir) / f'seed_{seed}' / 'weights' / 'best.pt'
-    if best_pt.exists():
-        return str(best_pt)
-    last_pt = Path(project_dir) / f'seed_{seed}' / 'weights' / 'last.pt'
-    if last_pt.exists():
-        return str(last_pt)
-    return str(best_pt)
+    target_weights_dir = Path(project_dir) / f'seed_{seed}' / 'weights'
+    target_best = target_weights_dir / 'best.pt'
+    target_last = target_weights_dir / 'last.pt'
+
+    candidates = [target_best, target_last]
+    if hasattr(model, 'trainer') and model.trainer and hasattr(model.trainer, 'save_dir'):
+        t_dir = Path(model.trainer.save_dir) / 'weights'
+        candidates.extend([t_dir / 'best.pt', t_dir / 'last.pt'])
+    if hasattr(results, 'save_dir'):
+        r_dir = Path(results.save_dir) / 'weights'
+        candidates.extend([r_dir / 'best.pt', r_dir / 'last.pt'])
+    ext_dir = Path('C:/Dev/repos/Public repos/DMS-Eval/runs/detect/models') / model_name / 'baseline' / f'seed_{seed}' / 'weights'
+    candidates.extend([ext_dir / 'best.pt', ext_dir / 'last.pt'])
+
+    for cand in candidates:
+        if cand.exists():
+            if not target_best.exists():
+                target_weights_dir.mkdir(parents=True, exist_ok=True)
+                import shutil
+                shutil.copy2(cand, target_best)
+            return str(cand)
+    return str(target_best)
 
 
 def main():

@@ -86,13 +86,23 @@ def main():
                     exist_ok=True,
                     device=args.device,
                 )
-                best_weights = (ft_dir / f'seed_{seed}' / 'weights'
-                                / 'best.pt')
-                if not best_weights.exists():
-                    last_weights = (ft_dir / f'seed_{seed}' / 'weights'
-                                    / 'last.pt')
-                    if last_weights.exists():
-                        best_weights = last_weights
+                target_weights_dir = ft_dir / f'seed_{seed}' / 'weights'
+                best_weights = target_weights_dir / 'best.pt'
+                candidates = [best_weights, target_weights_dir / 'last.pt']
+                if hasattr(ft_model, 'trainer') and ft_model.trainer and hasattr(ft_model.trainer, 'save_dir'):
+                    t_dir = Path(ft_model.trainer.save_dir) / 'weights'
+                    candidates.extend([t_dir / 'best.pt', t_dir / 'last.pt'])
+                ext_dir = Path('C:/Dev/repos/Public repos/DMS-Eval/runs/detect/models') / model_name / 'pruning_fp32' / ratio_label / f'seed_{seed}' / 'weights'
+                candidates.extend([ext_dir / 'best.pt', ext_dir / 'last.pt'])
+
+                for cand in candidates:
+                    if cand.exists():
+                        if not best_weights.exists():
+                            target_weights_dir.mkdir(parents=True, exist_ok=True)
+                            import shutil
+                            shutil.copy2(cand, best_weights)
+                        best_weights = cand
+                        break
 
                 # Evaluate
                 ev = evaluate_model(str(best_weights), args.data,
