@@ -179,6 +179,7 @@ Mean ± std over K seeds.
 | YOLO11n | | | |
 | YOLO26n | | | |
 
+
 ## Repo Layout
 ```text
 configs/
@@ -209,4 +210,4 @@ scripts/
 | **Proceedings & Indexing** | IEEE Xplore (Associated with IEEE Systems Council) |
 | **Official Website** | [guauc.com/2027](https://guauc.com/2027/) |
 | **Submission Link** | [guauc.com/2027/submission.html](https://guauc.com/2027/submission.html) |
-| **Contact Email** | `confgcauc@gmail.com` |
+| **Contact Email** | `confgcauc@gmail.com` |

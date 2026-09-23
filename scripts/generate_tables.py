@@ -1,58 +1,306 @@
-"""Generate result tables (Tables 1-5) from saved metrics."""
+"""Generate result tables (Tables 1-5) and populate README.md with metrics."""
 
+import argparse
 import json
+import re
 import sys
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8')
 from pathlib import Path
+from collections import defaultdict
+import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 MODELS = ['yolo11n', 'yolo26n']
+PRUNING_LABELS = ['0%', 'R%', '2R%', '3R%', '4R%', '5R%']
+QUANT_ORDER = ['fp32', 'fp16', 'int8', 'int4']
+CLASS_NAMES = ['yawning', 'hand_over_mouth', 'drinking', 'phone_use']
+
+
+def fmt_stat(mean_val, std_val, digits=3):
+    if mean_val is None:
+        return ""
+    if std_val is None or std_val == 0.0:
+        return f"{mean_val:.{digits}f}"
+    return f"{mean_val:.{digits}f} ± {std_val:.{digits}f}"
+
+
+def fmt_pass(passed, boundary):
+    if passed is None:
+        return ""
+    if passed:
+        return "Pass†" if boundary else "Pass"
+    return "Fail"
+
+
+def load_model_data(model_name):
+    base_dir = Path('results') / model_name
+    rbase_file = base_dir / 'baseline' / 'r_base.json'
+    if not rbase_file.exists():
+        return None
+
+    with open(rbase_file) as f:
+        rbase_data = json.load(f)
+
+    # Collect all metrics.json files
+    all_metrics = []
+    for p in base_dir.rglob('metrics.json'):
+        with open(p) as f:
+            all_metrics.append(json.load(f))
+
+    # Aggregated file if present
+    agg_file = base_dir / 'aggregated.json'
+    agg_data = []
+    if agg_file.exists():
+        with open(agg_file) as f:
+            agg_data = json.load(f)
+
+    sel_file = base_dir / 'selected.json'
+    sel_data = None
+    if sel_file.exists():
+        with open(sel_file) as f:
+            sel_data = json.load(f)
+
+    return {
+        'rbase': rbase_data,
+        'metrics': all_metrics,
+        'aggregated': agg_data,
+        'selected': sel_data,
+    }
+
+
+def find_config(agg_list, pruning_ratio, quant_level):
+    for c in agg_list:
+        if abs(c['pruning_ratio'] - pruning_ratio) < 1e-4 and c['quantization'].lower() == quant_level.lower():
+            return c
+    return None
+
+
+def build_table1(data_by_model):
+    lines = [
+        "### Table 1: Pruning sweep at FP32",
+        "Mean ± std over K seeds; **†** = boundary-close.",
+        "",
+        "| Model | Pruning | mAP50 | mAP50:95 | Recall @ τ* | Precision @ τ* | Min safety-class recall @ τ* | Size | FLOPs | FPS | Pass |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|",
+    ]
+    ratios = [0.0, 0.10, 0.20, 0.30, 0.40, 0.50]
+    display_names = {'yolo11n': 'YOLO11n', 'yolo26n': 'YOLO26n'}
+
+    for m in MODELS:
+        mname = display_names.get(m, m)
+        d = data_by_model.get(m)
+        agg = d['aggregated'] if d else []
+        for r, label in zip(ratios, PRUNING_LABELS):
+            c = find_config(agg, r, 'fp32')
+            if c:
+                m50 = fmt_stat(c.get('mean_map50'), c.get('std_map50'))
+                m50_95 = fmt_stat(c.get('mean_map50_95'), c.get('std_map50_95'))
+                rec = fmt_stat(c.get('mean_recall_at_tau'), c.get('std_recall_at_tau'))
+                prec = fmt_stat(c.get('mean_precision'), c.get('std_precision'))
+                min_rec = fmt_stat(c.get('mean_min_recall'), c.get('std_min_recall'))
+                sz = f"{c.get('size_mb', 0):.1f} MB" if c.get('size_mb') else ""
+                flops = f"{c.get('flops_g', 0):.1f}G" if c.get('flops_g') else ""
+                fps = f"{c.get('fps', 0):.1f}" if c.get('fps') else ""
+                ps = fmt_pass(c.get('passed'), c.get('boundary'))
+                lines.append(f"| {mname} | {label} | {m50} | {m50_95} | {rec} | {prec} | {min_rec} | {sz} | {flops} | {fps} | {ps} |")
+            else:
+                lines.append(f"| {mname} | {label} | | | | | | | | | |")
+    return "\n".join(lines)
+
+
+def build_table2(data_by_model):
+    lines = [
+        "### Table 2: Quantization-only ablation at 0% pruning",
+        "Mean ± std over K seeds; **†** = boundary-close.",
+        "",
+        "| Model | Quantization | mAP50 | mAP50:95 | Recall @ τ* | Precision @ τ* | Min safety-class recall @ τ* | Size | FLOPs | FPS | Pass |",
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|",
+    ]
+    quants = ['FP32', 'FP16', 'INT8', 'INT4']
+    display_names = {'yolo11n': 'YOLO11n', 'yolo26n': 'YOLO26n'}
+
+    for m in MODELS:
+        mname = display_names.get(m, m)
+        d = data_by_model.get(m)
+        agg = d['aggregated'] if d else []
+        for q in quants:
+            c = find_config(agg, 0.0, q.lower())
+            if c:
+                m50 = fmt_stat(c.get('mean_map50'), c.get('std_map50'))
+                m50_95 = fmt_stat(c.get('mean_map50_95'), c.get('std_map50_95'))
+                rec = fmt_stat(c.get('mean_recall_at_tau'), c.get('std_recall_at_tau'))
+                prec = fmt_stat(c.get('mean_precision'), c.get('std_precision'))
+                min_rec = fmt_stat(c.get('mean_min_recall'), c.get('std_min_recall'))
+                sz = f"{c.get('size_mb', 0):.1f} MB" if c.get('size_mb') else ""
+                flops = f"{c.get('flops_g', 0):.1f}G" if c.get('flops_g') else ""
+                fps = f"{c.get('fps', 0):.1f}" if c.get('fps') else ""
+                ps = fmt_pass(c.get('passed'), c.get('boundary'))
+                lines.append(f"| {mname} | {q} | {m50} | {m50_95} | {rec} | {prec} | {min_rec} | {sz} | {flops} | {fps} | {ps} |")
+            else:
+                lines.append(f"| {mname} | {q} | | | | | | | | | |")
+    return "\n".join(lines)
+
+
+def build_table3(data_by_model):
+    lines = [
+        "### Table 3: Joint pruning × quantization (INT8)",
+        "Mean ± std over K seeds; **†** = boundary-close. QAT row(s) single-seed, per the QAT selection rule; omitted where not applicable.",
+        "",
+        "| Model | Pruning | Quantization | mAP50 | mAP50:95 | Recall @ τ* | Precision @ τ* | Min safety-class recall @ τ* | Size | FLOPs | FPS | Pass |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|",
+    ]
+    ratios = [0.0, 0.10, 0.20, 0.30, 0.40, 0.50]
+    display_names = {'yolo11n': 'YOLO11n', 'yolo26n': 'YOLO26n'}
+
+    for m in MODELS:
+        mname = display_names.get(m, m)
+        d = data_by_model.get(m)
+        agg = d['aggregated'] if d else []
+        for r, label in zip(ratios, PRUNING_LABELS):
+            c = find_config(agg, r, 'int8')
+            if c:
+                m50 = fmt_stat(c.get('mean_map50'), c.get('std_map50'))
+                m50_95 = fmt_stat(c.get('mean_map50_95'), c.get('std_map50_95'))
+                rec = fmt_stat(c.get('mean_recall_at_tau'), c.get('std_recall_at_tau'))
+                prec = fmt_stat(c.get('mean_precision'), c.get('std_precision'))
+                min_rec = fmt_stat(c.get('mean_min_recall'), c.get('std_min_recall'))
+                sz = f"{c.get('size_mb', 0):.1f} MB" if c.get('size_mb') else ""
+                flops = f"{c.get('flops_g', 0):.1f}G" if c.get('flops_g') else ""
+                fps = f"{c.get('fps', 0):.1f}" if c.get('fps') else ""
+                ps = fmt_pass(c.get('passed'), c.get('boundary'))
+                lines.append(f"| {mname} | {label} | INT8 | {m50} | {m50_95} | {rec} | {prec} | {min_rec} | {sz} | {flops} | {fps} | {ps} |")
+            else:
+                lines.append(f"| {mname} | {label} | INT8 | | | | | | | | | |")
+
+        # QAT row
+        c_qat = None
+        for c in agg:
+            if c['quantization'].lower() == 'int8_qat':
+                c_qat = c
+                break
+        if c_qat:
+            lbl = f"{int(c_qat['pruning_ratio']*100)}%"
+            m50 = fmt_stat(c_qat.get('mean_map50'), c_qat.get('std_map50'))
+            m50_95 = fmt_stat(c_qat.get('mean_map50_95'), c_qat.get('std_map50_95'))
+            rec = fmt_stat(c_qat.get('mean_recall_at_tau'), c_qat.get('std_recall_at_tau'))
+            prec = fmt_stat(c_qat.get('mean_precision'), c_qat.get('std_precision'))
+            min_rec = fmt_stat(c_qat.get('mean_min_recall'), c_qat.get('std_min_recall'))
+            sz = f"{c_qat.get('size_mb', 0):.1f} MB" if c_qat.get('size_mb') else ""
+            flops = f"{c_qat.get('flops_g', 0):.1f}G" if c_qat.get('flops_g') else ""
+            fps = f"{c_qat.get('fps', 0):.1f}" if c_qat.get('fps') else ""
+            ps = fmt_pass(c_qat.get('passed'), c_qat.get('boundary'))
+            lines.append(f"| {mname} | {lbl} | INT8 (QAT) | {m50} | {m50_95} | {rec} | {prec} | {min_rec} | {sz} | {flops} | {fps} | {ps} |")
+        else:
+            lines.append(f"| {mname} | _QAT-selected (if applicable)_ | INT8 (QAT) | | | | | | | | | |")
+    return "\n".join(lines)
+
+
+def build_table4(data_by_model):
+    lines = [
+        "### Table 4: Final selected configurations",
+        "Mean ± std over K seeds (single-seed for QAT-selected configs).",
+        "",
+        "| Model | Pruning | Quantization | τ* | Macro Recall @ τ* | Min safety-class recall @ τ* | Precision @ τ* | mAP50 | mAP50:95 | Size | FLOPs | FPS |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+    ]
+    display_names = {'yolo11n': 'YOLO11n', 'yolo26n': 'YOLO26n'}
+    for m in MODELS:
+        mname = display_names.get(m, m)
+        d = data_by_model.get(m)
+        sel = d['selected'] if d else None
+        if sel:
+            pr_label = f"{int(sel['pruning_ratio']*100)}%"
+            q_label = sel['quantization'].upper()
+            tau = fmt_stat(sel.get('tau_star'), None, 4) if 'tau_star' in sel else ""
+            mrec = fmt_stat(sel.get('mean_recall_at_tau'), sel.get('std_recall_at_tau'))
+            minrec = fmt_stat(sel.get('mean_min_recall'), sel.get('std_min_recall'))
+            prec = fmt_stat(sel.get('mean_precision'), sel.get('std_precision'))
+            m50 = fmt_stat(sel.get('mean_map50'), sel.get('std_map50'))
+            m50_95 = fmt_stat(sel.get('mean_map50_95'), sel.get('std_map50_95'))
+            sz = f"{sel.get('size_mb', 0):.1f} MB" if sel.get('size_mb') else ""
+            flops = f"{sel.get('flops_g', 0):.1f}G" if sel.get('flops_g') else ""
+            fps = f"{sel.get('fps', 0):.1f}" if sel.get('fps') else ""
+            lines.append(f"| {mname} | {pr_label} | {q_label} | {tau} | {mrec} | {minrec} | {prec} | {m50} | {m50_95} | {sz} | {flops} | {fps} |")
+        else:
+            lines.append(f"| {mname} | | | | | | | | | | | |")
+    return "\n".join(lines)
+
+
+def build_table5(data_by_model):
+    lines = [
+        "### Table 5: Per-class recall for final configurations",
+        "Mean ± std over K seeds.",
+        "",
+        "| Model | Class | Recall @ τ* | Pass (≥ R_floor) |",
+        "|---|---|---:|---|",
+    ]
+    display_names = {'yolo11n': 'YOLO11n', 'yolo26n': 'YOLO26n'}
+    for m in MODELS:
+        mname = display_names.get(m, m)
+        d = data_by_model.get(m)
+        sel = d['selected'] if d else None
+        rbase = d['rbase'] if d else None
+        r_floor = rbase['r_floor'] if rbase else 0.0
+
+        if sel and d:
+            # Look up seed metrics for selected config
+            matching = [
+                met for met in d['metrics']
+                if abs(met.get('pruning_ratio', -1) - sel['pruning_ratio']) < 1e-4
+                and met.get('quantization', '').lower() == sel['quantization'].lower()
+            ]
+            for cls in CLASS_NAMES:
+                rec_vals = [met['per_class_recall'][cls] for met in matching if 'per_class_recall' in met and cls in met['per_class_recall']]
+                if rec_vals:
+                    m_rec = float(np.mean(rec_vals))
+                    s_rec = float(np.std(rec_vals))
+                    rec_str = fmt_stat(m_rec, s_rec)
+                    pass_str = "Pass" if m_rec >= r_floor else "Fail"
+                    lines.append(f"| {mname} | `{cls}` | {rec_str} | {pass_str} |")
+                else:
+                    lines.append(f"| {mname} | `{cls}` | | |")
+        else:
+            lines.append(f"| {mname} | | | |")
+    return "\n".join(lines)
+
+
+def update_readme(new_tables_block):
+    readme_path = Path('README.md')
+    if not readme_path.exists():
+        return
+    text = readme_path.read_text(encoding='utf-8')
+    pattern = r"(## Results\s*\n\n)([\s\S]*?)(\n## Repo Layout)"
+    match = re.search(pattern, text)
+    if match:
+        updated = text[:match.start(2)] + new_tables_block + "\n\n" + text[match.end(2):]
+        readme_path.write_text(updated, encoding='utf-8')
+        print("Updated README.md results tables successfully.")
 
 
 def main():
-    for model_name in MODELS:
-        rbase_path = (Path('results') / model_name
-                      / 'baseline' / 'r_base.json')
-        if not rbase_path.exists():
-            print(f'No results for {model_name}')
-            continue
+    parser = argparse.ArgumentParser(description="Generate and populate result tables")
+    parser.add_argument('--no-readme', action='store_true', help="Do not update README.md")
+    args = parser.parse_args()
 
-        with open(rbase_path) as f:
-            rbase_info = json.load(f)
-        r_floor = rbase_info['r_floor']
+    data_by_model = {}
+    for m in MODELS:
+        data_by_model[m] = load_model_data(m)
 
-        print(f'\n=== {model_name}  '
-              f'(R_base={rbase_info["r_base"]:.4f}  '
-              f'R_floor={r_floor:.4f}) ===\n')
+    t1 = build_table1(data_by_model)
+    t2 = build_table2(data_by_model)
+    t3 = build_table3(data_by_model)
+    t4 = build_table4(data_by_model)
+    t5 = build_table5(data_by_model)
 
-        agg_path = Path('results') / model_name / 'aggregated.json'
-        if not agg_path.exists():
-            print('  Run step 5 (run_selection.py) first.')
-            continue
-        with open(agg_path) as f:
-            configs = json.load(f)
+    combined_block = f"{t1}\n\n{t2}\n\n{t3}\n\n{t4}\n\n{t5}"
+    print(combined_block)
 
-        for c in sorted(configs, key=lambda x: (x['quantization'],
-                                                 x['pruning_ratio'])):
-            flag = ' (boundary)' if c.get('boundary') else ''
-            status = 'Pass' if c['passed'] else 'FAIL'
-            fps_str = f'{c["fps"]:.1f}' if c.get('fps') else 'N/A'
-            print(f'  ratio={c["pruning_ratio"]:.0%}  '
-                  f'quant={c["quantization"]:<8s}  '
-                  f'recall={c["mean_min_recall"]:.3f}'
-                  f'+/-{c["std_min_recall"]:.3f}  '
-                  f'prec={c["mean_precision"]:.3f}  '
-                  f'mAP50={c["mean_map50"]:.3f}  '
-                  f'FPS={fps_str}  '
-                  f'{status}{flag}')
-
-        sel_path = Path('results') / model_name / 'selected.json'
-        if sel_path.exists():
-            with open(sel_path) as f:
-                sel = json.load(f)
-            fps_str = f'{sel["fps"]:.1f}' if sel.get('fps') else 'N/A'
-            print(f'\n  ** Selected: ratio={sel["pruning_ratio"]:.0%}  '
-                  f'quant={sel["quantization"]}  FPS={fps_str}')
+    if not args.no_readme:
+        update_readme(combined_block)
 
 
 if __name__ == '__main__':
