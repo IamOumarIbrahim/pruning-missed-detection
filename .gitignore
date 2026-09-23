@@ -1,1 +1,22 @@
 AGENT.md
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Training artifacts
+*.pt
+*.engine
+*.onnx
+runs/
+
+# Runtime outputs (keep .gitkeep)
+models/*
+!models/.gitkeep
+results/*
+!results/.gitkeep
+
+# IDE
+.vscode/
+.idea/

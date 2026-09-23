@@ -1,0 +1,7 @@
+ultralytics>=8.4.0
+torch>=2.0.0
+torch-pruning>=1.6.0
+numpy
+pyyaml
+onnx
+onnxruntime-gpu
