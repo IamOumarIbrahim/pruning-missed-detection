@@ -1,7 +1,6 @@
 # DMD RGB dataset configuration for Ultralytics YOLO.
-# path is resolved relative to this YAML file's parent directory.
 
-path: ../data/processed/RGB
+path: data/processed/RGB
 train: yolo/train.txt
 val: yolo/val.txt
 test: yolo/test.txt

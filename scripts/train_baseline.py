@@ -43,7 +43,13 @@ def train_single(model_name, seed, data_yaml, project_dir, device=0):
         exist_ok=True,
         device=device,
     )
-    return str(Path(project_dir) / f'seed_{seed}' / 'weights' / 'best.pt')
+    best_pt = Path(project_dir) / f'seed_{seed}' / 'weights' / 'best.pt'
+    if best_pt.exists():
+        return str(best_pt)
+    last_pt = Path(project_dir) / f'seed_{seed}' / 'weights' / 'last.pt'
+    if last_pt.exists():
+        return str(last_pt)
+    return str(best_pt)
 
 
 def main():

@@ -18,7 +18,7 @@ echo --- Step 4b: QAT where PTQ-INT8 fails ---
 python scripts\run_qat.py %*
 if %ERRORLEVEL% neq 0 (
     echo.
-    echo ERROR: Step 4b (QAT) failed with exit code %ERRORLEVEL%
+    echo ERROR: Step 4b QAT failed with exit code %ERRORLEVEL%
     pause
     exit /b %ERRORLEVEL%
 )

@@ -88,6 +88,11 @@ def main():
                 )
                 best_weights = (ft_dir / f'seed_{seed}' / 'weights'
                                 / 'best.pt')
+                if not best_weights.exists():
+                    last_weights = (ft_dir / f'seed_{seed}' / 'weights'
+                                    / 'last.pt')
+                    if last_weights.exists():
+                        best_weights = last_weights
 
                 # Evaluate
                 ev = evaluate_model(str(best_weights), args.data,

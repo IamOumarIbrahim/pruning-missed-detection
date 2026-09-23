@@ -8,6 +8,7 @@ original training. Reported as a separate INT8 (QAT) row in Table 3.
 
 from pathlib import Path
 from ultralytics import YOLO
+from quant.ptq import export_ptq
 
 
 def run_qat(model_path, data_yaml, output_dir, epochs=100, imgsz=640,
@@ -47,10 +48,9 @@ def run_qat(model_path, data_yaml, output_dir, epochs=100, imgsz=640,
     )
 
     best_weights = Path(output_dir) / 'train' / 'qat' / 'weights' / 'best.pt'
-    qat_model = YOLO(str(best_weights))
-    engine_path = qat_model.export(
-        format='engine', int8=True, data=str(data_yaml),
-        imgsz=imgsz, device=device, workspace=4,
+    engine_path = export_ptq(
+        str(best_weights), 'int8', str(output_dir),
+        data_yaml=data_yaml, imgsz=imgsz, device=device,
     )
 
     return {

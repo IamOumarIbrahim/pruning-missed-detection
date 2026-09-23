@@ -41,9 +41,27 @@ def export_ptq(model_path, quant_level, output_dir, data_yaml=None,
     else:
         raise ValueError(f"Unknown quant_level: {quant_level}")
 
-    engine_path = Path(model.export(**kwargs))
-
-    target = Path(output_dir) / f"model_{quant_level}.engine"
-    if engine_path.resolve() != target.resolve():
-        engine_path.rename(target)
-    return str(target)
+    try:
+        exported_path = Path(model.export(**kwargs))
+        target = Path(output_dir) / f"model_{quant_level}.engine"
+        if exported_path.resolve() != target.resolve():
+            if target.exists():
+                target.unlink()
+            exported_path.rename(target)
+        return str(target)
+    except Exception as e:
+        print(f"TensorRT export failed ({e}). Falling back to ONNX Runtime...")
+        onnx_kwargs = dict(format='onnx', imgsz=imgsz, device=device)
+        if quant_level == 'fp16':
+            onnx_kwargs['half'] = True
+        elif quant_level in ('int8', 'int4'):
+            onnx_kwargs['int8'] = True
+            if data_yaml:
+                onnx_kwargs['data'] = str(data_yaml)
+        exported_path = Path(model.export(**onnx_kwargs))
+        target = Path(output_dir) / f"model_{quant_level}.onnx"
+        if exported_path.resolve() != target.resolve():
+            if target.exists():
+                target.unlink()
+            exported_path.rename(target)
+        return str(target)

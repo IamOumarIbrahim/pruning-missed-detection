@@ -5,3 +5,4 @@ numpy
 pyyaml
 onnx
 onnxruntime-gpu
+tensorrt>=10.0.0

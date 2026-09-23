@@ -9,6 +9,7 @@ __pycache__/
 *.pt
 *.engine
 *.onnx
+*.cache
 runs/
 
 # Runtime outputs (keep .gitkeep)
@@ -20,3 +21,7 @@ results/*
 # IDE
 .vscode/
 .idea/
+
+# Dataset images (linked or local media)
+data/processed/RGB/images/
+data/processed/RGB/images

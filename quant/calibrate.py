@@ -25,8 +25,19 @@ def sample_calibration_set(data_yaml, num_samples=300, seed=42,
     with open(data_yaml) as f:
         cfg = yaml.safe_load(f)
 
-    data_root = Path(data_yaml).parent / cfg['path']
-    train_file = data_root / cfg['train']
+    raw_path = Path(cfg.get('path', ''))
+    if raw_path.is_absolute() and raw_path.exists():
+        data_root = raw_path
+    elif (Path(data_yaml).parent / raw_path).exists():
+        data_root = (Path(data_yaml).parent / raw_path).resolve()
+    elif (Path.cwd() / raw_path).exists():
+        data_root = (Path.cwd() / raw_path).resolve()
+    elif (Path(data_yaml).resolve().parent.parent / raw_path).exists():
+        data_root = (Path(data_yaml).resolve().parent.parent / raw_path).resolve()
+    else:
+        data_root = (Path.cwd() / raw_path).resolve()
+
+    train_file = (data_root / cfg['train']).resolve()
 
     with open(train_file) as f:
         all_images = [l.strip() for l in f if l.strip()]

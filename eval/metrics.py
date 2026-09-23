@@ -171,21 +171,32 @@ def evaluate_model(model, data_yaml, split='test', imgsz=640):
     # Resolve image list
     with open(data_yaml) as f:
         data_cfg = _yaml.safe_load(f)
-    data_root = Path(data_yaml).parent / data_cfg['path']
-    split_file = data_root / data_cfg.get(split, data_cfg.get('test'))
 
-    with open(split_file) as f:
-        image_paths = [l.strip() for l in f if l.strip()]
-    txt_dir = split_file.parent
-    resolved = [(txt_dir / p).resolve() for p in image_paths]
+    raw_path = Path(data_cfg.get('path', ''))
+    if raw_path.is_absolute() and raw_path.exists():
+        data_root = raw_path
+    elif (Path(data_yaml).parent / raw_path).exists():
+        data_root = (Path(data_yaml).parent / raw_path).resolve()
+    elif (Path.cwd() / raw_path).exists():
+        data_root = (Path.cwd() / raw_path).resolve()
+    elif (Path(data_yaml).resolve().parent.parent / raw_path).exists():
+        data_root = (Path(data_yaml).resolve().parent.parent / raw_path).resolve()
+    else:
+        data_root = (Path.cwd() / raw_path).resolve()
+
+    rel_split = data_cfg.get(split, data_cfg.get('test', 'yolo/test.txt'))
+    split_file = (data_root / rel_split).resolve()
 
     # Run predictions at low conf to capture all detections
     all_matches = []
     gt_class_counts = {i: 0 for i in range(NUM_CLASSES)}
 
-    results_gen = model.predict(source=resolved, conf=0.001, iou=0.5,
+    results_gen = model.predict(source=str(split_file), conf=0.001, iou=0.5,
                                 imgsz=imgsz, verbose=False, stream=True)
-    for img_path, result in zip(resolved, results_gen):
+    num_processed = 0
+    for result in results_gen:
+        num_processed += 1
+        img_path = Path(result.path)
         if len(result.boxes) > 0:
             pred_boxes = result.boxes.xyxy.cpu().numpy().tolist()
             pred_confs = result.boxes.conf.cpu().numpy().tolist()
@@ -214,5 +225,5 @@ def evaluate_model(model, data_yaml, split='test', imgsz=640):
         'map50_95': map50_95,
         'matches': all_matches,
         'gt_counts': gt_class_counts,
-        'image_count': len(resolved),
+        'image_count': num_processed,
     }
