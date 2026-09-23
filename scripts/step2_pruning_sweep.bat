@@ -7,7 +7,6 @@ python scripts\run_pruning_sweep.py %*
 if %ERRORLEVEL% neq 0 (
     echo.
     echo ERROR: Step 2 failed with exit code %ERRORLEVEL%
-    pause
     exit /b %ERRORLEVEL%
 )
 echo.

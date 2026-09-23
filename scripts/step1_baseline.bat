@@ -7,7 +7,6 @@ python scripts\train_baseline.py %*
 if %ERRORLEVEL% neq 0 (
     echo.
     echo ERROR: Step 1 failed with exit code %ERRORLEVEL%
-    pause
     exit /b %ERRORLEVEL%
 )
 echo.

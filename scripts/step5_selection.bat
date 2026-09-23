@@ -8,7 +8,6 @@ python scripts\run_selection.py %*
 if %ERRORLEVEL% neq 0 (
     echo.
     echo ERROR: Selection failed with exit code %ERRORLEVEL%
-    pause
     exit /b %ERRORLEVEL%
 )
 

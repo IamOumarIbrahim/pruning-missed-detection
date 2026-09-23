@@ -7,7 +7,6 @@ python scripts\run_quant_ablation.py %*
 if %ERRORLEVEL% neq 0 (
     echo.
     echo ERROR: Step 3 failed with exit code %ERRORLEVEL%
-    pause
     exit /b %ERRORLEVEL%
 )
 echo.

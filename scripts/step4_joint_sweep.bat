@@ -9,7 +9,6 @@ python scripts\run_joint_sweep.py %*
 if %ERRORLEVEL% neq 0 (
     echo.
     echo ERROR: Step 4a failed with exit code %ERRORLEVEL%
-    pause
     exit /b %ERRORLEVEL%
 )
 
@@ -19,7 +18,6 @@ python scripts\run_qat.py %*
 if %ERRORLEVEL% neq 0 (
     echo.
     echo ERROR: Step 4b QAT failed with exit code %ERRORLEVEL%
-    pause
     exit /b %ERRORLEVEL%
 )
 
