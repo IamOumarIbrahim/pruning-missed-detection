@@ -29,6 +29,12 @@ DATA_YAML = 'configs/dmd_rgb.yaml'
 
 def train_single(model_name, seed, data_yaml, project_dir, device=0):
     """Train one model with one seed. Returns path to best weights."""
+    target_weights_dir = Path(project_dir) / f'seed_{seed}' / 'weights'
+    target_best = target_weights_dir / 'best.pt'
+    if target_best.exists():
+        print(f"  Existing baseline weights found at {target_best}. Keeping as is.")
+        return str(target_best)
+
     model = YOLO(f'{model_name}.pt')
     results = model.train(
         data=data_yaml,

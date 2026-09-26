@@ -9,6 +9,7 @@ original training. Reported as a separate INT8 (QAT) row in Table 3.
 from pathlib import Path
 from ultralytics import YOLO
 from quant.ptq import export_ptq
+from prune.pruner import PrunedDetectionTrainer
 
 
 def run_qat(model_path, data_yaml, output_dir, epochs=100, imgsz=640,
@@ -32,6 +33,7 @@ def run_qat(model_path, data_yaml, output_dir, epochs=100, imgsz=640,
     model = YOLO(str(model_path))
 
     model.train(
+        trainer=PrunedDetectionTrainer,
         data=str(data_yaml),
         epochs=epochs,
         batch=batch,

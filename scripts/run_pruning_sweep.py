@@ -12,7 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from ultralytics import YOLO
-from prune.pruner import prune_model, get_model_info
+from prune.pruner import prune_model, get_model_info, PrunedDetectionTrainer
 from eval.metrics import evaluate_model
 from eval.threshold import optimize_threshold
 from eval.benchmark import benchmark_fps
@@ -74,6 +74,7 @@ def main():
                           / ratio_label)
                 ft_model = YOLO(str(pruned_path))
                 ft_model.train(
+                    trainer=PrunedDetectionTrainer,
                     data=args.data,
                     epochs=EPOCHS,
                     batch=BATCH,
