@@ -20,11 +20,11 @@
   },
   "size_mb": 2.652682304382324,
   "flops_g": 3.3006,
-  "fps": 71.1,
+  "fps": 93.5,
   "r_floor_k": 0.8735412474849095,
   "params": 1231676,
   "parameters": 1231676,
-  "latency_ms": 14.06,
+  "latency_ms": 10.7,
   "fixed_eval": {
     "tau_25": {
       "target_tau": 0.25,

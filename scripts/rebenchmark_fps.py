@@ -11,7 +11,7 @@ import numpy as np
 import onnxruntime as ort
 from ultralytics import YOLO
 
-def benchmark_pt(model_path, imgsz=640, device='cuda:0', warmup=20, iters=50):
+def benchmark_pt(model_path, imgsz=640, device='cuda:0', warmup=50, iters=200):
     m = YOLO(model_path).model.to(device)
     m.eval()
     x = torch.zeros((1, 3, imgsz, imgsz), device=device)
@@ -95,11 +95,11 @@ def main():
             label = d.get('pruning_label', '')
             q = d.get('quantization', '')
             seed = d.get('seed', '')
-            print(f'[{idx}/{total}] {model_name} {label} {q} seed {seed}: {latency} ms ({fps} FPS)')
+            print(f'[{idx}/{total}] {model_name} {label} {q} seed {seed}: {latency} ms ({fps} FPS)', flush=True)
         except Exception as e:
-            print(f'[{idx}/{total}] ERROR {model_path}: {e}')
+            print(f'[{idx}/{total}] ERROR {model_path}: {e}', flush=True)
 
-    print('Controlled FPS re-benchmarking complete.')
+    print('Controlled FPS re-benchmarking complete.', flush=True)
 
 if __name__ == '__main__':
     main()

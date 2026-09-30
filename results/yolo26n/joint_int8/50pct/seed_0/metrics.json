@@ -19,10 +19,10 @@
     "phone_use": 0.89738430583501
   },
   "size_mb": 1.613504409790039,
-  "fps": 29.6,
+  "fps": 31.4,
   "r_floor_k": 0.887625754527163,
   "params": 1247456,
   "parameters": 1247456,
   "flops_g": 2.726,
-  "latency_ms": 33.8
+  "latency_ms": 31.87
 }
