@@ -112,69 +112,69 @@ Pass/flag criteria and $\tau$ re-tuning follow the Objective section uniformly a
 - **Runtime / framework:** NVIDIA TensorRT 10.x (TensorRT engine execution; ONNX Runtime as fallback)
 
 ## Metrics
-mAP50 · mAP50:95 · Recall @ τ* (macro) · Precision @ τ* · Min safety-class recall @ τ* (drives Pass; see Objective) · Size · FLOPs (reported only) · FPS (selection metric)
+mAP50 · mAP50:95 · Safety Recall @ τ* (worst-case class recall $\min_c \text{Recall}_c$, drives Pass; see Objective) · Precision @ τ* · Size · FLOPs (reported only) · FPS (selection metric)
 
 ## Results
 
 ### Table 1: Pruning sweep at FP32
-Mean ± std over K seeds; **†** = boundary-close.
+Mean ± std over K seeds; **†** = boundary-close. Safety Recall is minimum per-class recall across safety classes.
 
-| Model | Pruning | mAP50 | mAP50:95 | Recall @ τ* | Precision @ τ* | Min safety-class recall @ τ* | Size | FLOPs | FPS | Pass |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
-| YOLO11n | 0% | 0.933 ± 0.007 | 0.563 ± 0.013 | 0.932 ± 0.007 | 0.881 ± 0.036 | 0.890 ± 0.017 | 5.2 MB | 6.5G | 90.6 | Pass† |
-| YOLO11n | R% | 0.936 ± 0.009 | 0.575 ± 0.008 | 0.959 ± 0.005 | 0.746 ± 0.103 | 0.889 ± 0.016 | 4.6 MB | 5.6G | 83.1 | Pass† |
-| YOLO11n | 2R% | 0.937 ± 0.004 | 0.561 ± 0.004 | 0.949 ± 0.014 | 0.845 ± 0.039 | 0.891 ± 0.015 | 4.0 MB | 4.9G | 86.3 | Pass† |
-| YOLO11n | 3R% | 0.928 ± 0.009 | 0.556 ± 0.012 | 0.948 ± 0.004 | 0.746 ± 0.118 | 0.887 ± 0.017 | 3.5 MB | 4.3G | 84.6 | Fail |
-| YOLO11n | 4R% | 0.930 ± 0.004 | 0.561 ± 0.005 | 0.942 ± 0.013 | 0.843 ± 0.074 | 0.889 ± 0.016 | 3.0 MB | 3.7G | 81.8 | Pass† |
-| YOLO11n | 5R% | 0.928 ± 0.004 | 0.568 ± 0.012 | 0.947 ± 0.009 | 0.840 ± 0.029 | 0.891 ± 0.015 | 2.7 MB | 3.3G | 90.2 | Pass† |
-| YOLO26n | 0% | 0.919 ± 0.014 | 0.570 ± 0.008 | 0.937 ± 0.005 | 0.859 ± 0.033 | 0.887 ± 0.006 | 5.1 MB | 5.9G | 69.7 | Pass† |
-| YOLO26n | R% | 0.909 ± 0.007 | 0.566 ± 0.004 | 0.934 ± 0.013 | 0.719 ± 0.014 | 0.887 ± 0.006 | 4.6 MB | 5.0G | 60.6 | Pass† |
-| YOLO26n | 2R% | 0.912 ± 0.004 | 0.572 ± 0.005 | 0.940 ± 0.009 | 0.751 ± 0.136 | 0.896 ± 0.012 | 4.0 MB | 4.3G | 62.3 | Pass† |
-| YOLO26n | 3R% | 0.912 ± 0.009 | 0.572 ± 0.007 | 0.934 ± 0.017 | 0.780 ± 0.103 | 0.888 ± 0.006 | 3.6 MB | 3.7G | 58.9 | Pass† |
-| YOLO26n | 4R% | 0.918 ± 0.013 | 0.572 ± 0.013 | 0.949 ± 0.016 | 0.706 ± 0.146 | 0.887 ± 0.006 | 3.1 MB | 3.2G | 61.7 | Pass† |
-| YOLO26n | 5R% | 0.913 ± 0.004 | 0.567 ± 0.004 | 0.949 ± 0.004 | 0.722 ± 0.057 | 0.888 ± 0.007 | 2.8 MB | 2.7G | 65.6 | Pass† |
+| Model | Pruning | mAP50 | mAP50:95 | Safety Recall @ τ* | Precision @ τ* | Size | FLOPs | FPS | Pass |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| YOLO11n | 0% | 0.933 ± 0.007 | 0.563 ± 0.013 | 0.890 ± 0.017 | 0.881 ± 0.036 | 5.2 MB | 6.5G | 90.6 | Pass† |
+| YOLO11n | R% | 0.936 ± 0.009 | 0.575 ± 0.008 | 0.889 ± 0.016 | 0.746 ± 0.103 | 4.6 MB | 5.6G | 83.1 | Pass† |
+| YOLO11n | 2R% | 0.937 ± 0.004 | 0.561 ± 0.004 | 0.891 ± 0.015 | 0.845 ± 0.039 | 4.0 MB | 4.9G | 86.3 | Pass† |
+| YOLO11n | 3R% | 0.928 ± 0.009 | 0.556 ± 0.012 | 0.887 ± 0.017 | 0.746 ± 0.118 | 3.5 MB | 4.3G | 84.6 | Fail |
+| YOLO11n | 4R% | 0.930 ± 0.004 | 0.561 ± 0.005 | 0.889 ± 0.016 | 0.843 ± 0.074 | 3.0 MB | 3.7G | 81.8 | Pass† |
+| YOLO11n | 5R% | 0.928 ± 0.004 | 0.568 ± 0.012 | 0.891 ± 0.015 | 0.840 ± 0.029 | 2.7 MB | 3.3G | 90.2 | Pass† |
+| YOLO26n | 0% | 0.919 ± 0.014 | 0.570 ± 0.008 | 0.887 ± 0.006 | 0.859 ± 0.033 | 5.1 MB | 5.9G | 69.7 | Pass† |
+| YOLO26n | R% | 0.909 ± 0.007 | 0.566 ± 0.004 | 0.887 ± 0.006 | 0.719 ± 0.014 | 4.6 MB | 5.0G | 60.6 | Pass† |
+| YOLO26n | 2R% | 0.912 ± 0.004 | 0.572 ± 0.005 | 0.896 ± 0.012 | 0.751 ± 0.136 | 4.0 MB | 4.3G | 62.3 | Pass† |
+| YOLO26n | 3R% | 0.912 ± 0.009 | 0.572 ± 0.007 | 0.888 ± 0.006 | 0.780 ± 0.103 | 3.6 MB | 3.7G | 58.9 | Pass† |
+| YOLO26n | 4R% | 0.918 ± 0.013 | 0.572 ± 0.013 | 0.887 ± 0.006 | 0.706 ± 0.146 | 3.1 MB | 3.2G | 61.7 | Pass† |
+| YOLO26n | 5R% | 0.913 ± 0.004 | 0.567 ± 0.004 | 0.888 ± 0.007 | 0.722 ± 0.057 | 2.8 MB | 2.7G | 65.6 | Pass† |
 
 ### Table 2: Quantization-only ablation at 0% pruning
-Mean ± std over K seeds; **†** = boundary-close.
+Mean ± std over K seeds; **†** = boundary-close. Safety Recall is minimum per-class recall across safety classes.
 
-| Model | Quantization | mAP50 | mAP50:95 | Recall @ τ* | Precision @ τ* | Min safety-class recall @ τ* | Size | FLOPs | FPS | Pass |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
-| YOLO11n | FP32 | 0.933 ± 0.007 | 0.563 ± 0.013 | 0.932 ± 0.007 | 0.881 ± 0.036 | 0.890 ± 0.017 | 5.2 MB | 6.5G | 90.6 | Pass† |
-| YOLO11n | FP16 | 0.925 ± 0.013 | 0.557 ± 0.016 | 0.931 ± 0.006 | 0.880 ± 0.036 | 0.889 ± 0.016 | 5.1 MB | 6.5G | 20.9 | Pass† |
-| YOLO11n | INT8 | 0.874 ± 0.031 | 0.502 ± 0.031 | 0.938 ± 0.011 | 0.808 ± 0.032 | 0.891 ± 0.018 | 2.9 MB | 6.5G | 18.2 | Pass† |
-| YOLO11n | INT4 | 0.874 ± 0.031 | 0.502 ± 0.031 | 0.938 ± 0.011 | 0.808 ± 0.032 | 0.891 ± 0.018 | 2.9 MB | 6.5G | 17.9 | Pass† |
-| YOLO26n | FP32 | 0.919 ± 0.014 | 0.570 ± 0.008 | 0.937 ± 0.005 | 0.859 ± 0.033 | 0.887 ± 0.006 | 5.1 MB | 5.9G | 69.7 | Pass† |
-| YOLO26n | FP16 | 0.923 ± 0.006 | 0.576 ± 0.008 | 0.937 ± 0.005 | 0.861 ± 0.035 | 0.888 ± 0.007 | 4.7 MB | 5.9G | 22.2 | Pass† |
-| YOLO26n | INT8 | 0.884 ± 0.010 | 0.541 ± 0.010 | 0.940 ± 0.003 | 0.813 ± 0.012 | 0.892 ± 0.006 | 2.8 MB | 5.9G | 17.0 | Pass |
-| YOLO26n | INT4 | 0.884 ± 0.010 | 0.541 ± 0.010 | 0.940 ± 0.003 | 0.813 ± 0.012 | 0.892 ± 0.006 | 2.8 MB | 5.9G | 18.8 | Pass |
+| Model | Quantization | mAP50 | mAP50:95 | Safety Recall @ τ* | Precision @ τ* | Size | FLOPs | FPS | Pass |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---|
+| YOLO11n | FP32 | 0.933 ± 0.007 | 0.563 ± 0.013 | 0.890 ± 0.017 | 0.881 ± 0.036 | 5.2 MB | 6.5G | 90.6 | Pass† |
+| YOLO11n | FP16 | 0.925 ± 0.013 | 0.557 ± 0.016 | 0.889 ± 0.016 | 0.880 ± 0.036 | 5.1 MB | 6.5G | 20.9 | Pass† |
+| YOLO11n | INT8 | 0.874 ± 0.031 | 0.502 ± 0.031 | 0.891 ± 0.018 | 0.808 ± 0.032 | 2.9 MB | 6.5G | 18.2 | Pass† |
+| YOLO11n | INT4 | 0.874 ± 0.031 | 0.502 ± 0.031 | 0.891 ± 0.018 | 0.808 ± 0.032 | 2.9 MB | 6.5G | 17.9 | Pass† |
+| YOLO26n | FP32 | 0.919 ± 0.014 | 0.570 ± 0.008 | 0.887 ± 0.006 | 0.859 ± 0.033 | 5.1 MB | 5.9G | 69.7 | Pass† |
+| YOLO26n | FP16 | 0.923 ± 0.006 | 0.576 ± 0.008 | 0.888 ± 0.007 | 0.861 ± 0.035 | 4.7 MB | 5.9G | 22.2 | Pass† |
+| YOLO26n | INT8 | 0.884 ± 0.010 | 0.541 ± 0.010 | 0.892 ± 0.006 | 0.813 ± 0.012 | 2.8 MB | 5.9G | 17.0 | Pass |
+| YOLO26n | INT4 | 0.884 ± 0.010 | 0.541 ± 0.010 | 0.892 ± 0.006 | 0.813 ± 0.012 | 2.8 MB | 5.9G | 18.8 | Pass |
 
 ### Table 3: Joint pruning × quantization (INT8)
 Mean ± std over K seeds; **†** = boundary-close. QAT row(s) single-seed, per the QAT selection rule; omitted where not applicable.
 
-| Model | Pruning | Quantization | mAP50 | mAP50:95 | Recall @ τ* | Precision @ τ* | Min safety-class recall @ τ* | Size | FLOPs | FPS | Pass |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
-| YOLO11n | 0% | INT8 | 0.874 ± 0.031 | 0.502 ± 0.031 | 0.938 ± 0.011 | 0.808 ± 0.032 | 0.891 ± 0.018 | 2.9 MB | 6.5G | 18.2 | Pass† |
-| YOLO11n | R% | INT8 | 0.888 ± 0.033 | 0.512 ± 0.015 | 0.963 ± 0.005 | 0.680 ± 0.122 | 0.889 ± 0.016 | 2.6 MB | 5.6G | 19.9 | Pass† |
-| YOLO11n | 2R% | INT8 | 0.872 ± 0.029 | 0.488 ± 0.036 | 0.955 ± 0.006 | 0.784 ± 0.083 | 0.892 ± 0.018 | 2.3 MB | 4.9G | 22.5 | Pass† |
-| YOLO11n | 3R% | INT8 | 0.884 ± 0.016 | 0.508 ± 0.017 | 0.952 ± 0.004 | 0.687 ± 0.112 | 0.887 ± 0.022 | 2.1 MB | 4.3G | 24.3 | Fail |
-| YOLO11n | 4R% | INT8 | 0.888 ± 0.023 | 0.502 ± 0.025 | 0.945 ± 0.009 | 0.771 ± 0.101 | 0.889 ± 0.016 | 1.8 MB | 3.7G | 26.7 | Pass† |
-| YOLO11n | 5R% | INT8 | 0.901 ± 0.010 | 0.525 ± 0.012 | 0.946 ± 0.014 | 0.786 ± 0.099 | 0.891 ± 0.017 | 1.6 MB | 3.3G | 29.1 | Pass† |
-| YOLO11n | 30% | INT8 (QAT) | 0.910 | 0.512 | 0.955 | 0.822 | 0.891 | 2.1 MB | 4.3G | 24.3 | Pass |
-| YOLO26n | 0% | INT8 | 0.884 ± 0.010 | 0.541 ± 0.010 | 0.940 ± 0.003 | 0.813 ± 0.012 | 0.892 ± 0.006 | 2.8 MB | 5.9G | 17.0 | Pass |
-| YOLO26n | R% | INT8 | 0.868 ± 0.023 | 0.535 ± 0.010 | 0.932 ± 0.017 | 0.563 ± 0.094 | 0.893 ± 0.010 | 2.5 MB | 5.0G | 20.0 | Pass† |
-| YOLO26n | 2R% | INT8 | 0.873 ± 0.020 | 0.543 ± 0.009 | 0.938 ± 0.011 | 0.753 ± 0.122 | 0.895 ± 0.012 | 2.2 MB | 4.3G | 22.8 | Pass† |
-| YOLO26n | 3R% | INT8 | 0.889 ± 0.021 | 0.545 ± 0.020 | 0.942 ± 0.010 | 0.701 ± 0.104 | 0.890 ± 0.008 | 2.0 MB | 3.7G | 25.8 | Pass† |
-| YOLO26n | 4R% | INT8 | 0.891 ± 0.006 | 0.548 ± 0.008 | 0.962 ± 0.001 | 0.568 ± 0.129 | 0.896 ± 0.004 | 1.8 MB | 3.2G | 28.3 | Pass |
-| YOLO26n | 5R% | INT8 | 0.880 ± 0.010 | 0.543 ± 0.018 | 0.952 ± 0.008 | 0.636 ± 0.018 | 0.905 ± 0.007 | 1.6 MB | 2.7G | 32.1 | Pass |
-| YOLO26n | _QAT-selected (if applicable)_ | INT8 (QAT) | | | | | | | | | |
+| Model | Pruning | Quantization | mAP50 | mAP50:95 | Safety Recall @ τ* | Precision @ τ* | Size | FLOPs | FPS | Pass |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| YOLO11n | 0% | INT8 | 0.874 ± 0.031 | 0.502 ± 0.031 | 0.891 ± 0.018 | 0.808 ± 0.032 | 2.9 MB | 6.5G | 18.2 | Pass† |
+| YOLO11n | R% | INT8 | 0.888 ± 0.033 | 0.512 ± 0.015 | 0.889 ± 0.016 | 0.680 ± 0.122 | 2.6 MB | 5.6G | 19.9 | Pass† |
+| YOLO11n | 2R% | INT8 | 0.872 ± 0.029 | 0.488 ± 0.036 | 0.892 ± 0.018 | 0.784 ± 0.083 | 2.3 MB | 4.9G | 22.5 | Pass† |
+| YOLO11n | 3R% | INT8 | 0.884 ± 0.016 | 0.508 ± 0.017 | 0.887 ± 0.022 | 0.687 ± 0.112 | 2.1 MB | 4.3G | 24.3 | Fail |
+| YOLO11n | 4R% | INT8 | 0.888 ± 0.023 | 0.502 ± 0.025 | 0.889 ± 0.016 | 0.771 ± 0.101 | 1.8 MB | 3.7G | 26.7 | Pass† |
+| YOLO11n | 5R% | INT8 | 0.901 ± 0.010 | 0.525 ± 0.012 | 0.891 ± 0.017 | 0.786 ± 0.099 | 1.6 MB | 3.3G | 29.1 | Pass† |
+| YOLO11n | 30% | INT8 (QAT) | 0.910 | 0.512 | 0.891 | 0.822 | 2.1 MB | 4.3G | 24.3 | Pass |
+| YOLO26n | 0% | INT8 | 0.884 ± 0.010 | 0.541 ± 0.010 | 0.892 ± 0.006 | 0.813 ± 0.012 | 2.8 MB | 5.9G | 17.0 | Pass |
+| YOLO26n | R% | INT8 | 0.868 ± 0.023 | 0.535 ± 0.010 | 0.893 ± 0.010 | 0.563 ± 0.094 | 2.5 MB | 5.0G | 20.0 | Pass† |
+| YOLO26n | 2R% | INT8 | 0.873 ± 0.020 | 0.543 ± 0.009 | 0.895 ± 0.012 | 0.753 ± 0.122 | 2.2 MB | 4.3G | 22.8 | Pass† |
+| YOLO26n | 3R% | INT8 | 0.889 ± 0.021 | 0.545 ± 0.020 | 0.890 ± 0.008 | 0.701 ± 0.104 | 2.0 MB | 3.7G | 25.8 | Pass† |
+| YOLO26n | 4R% | INT8 | 0.891 ± 0.006 | 0.548 ± 0.008 | 0.896 ± 0.004 | 0.568 ± 0.129 | 1.8 MB | 3.2G | 28.3 | Pass |
+| YOLO26n | 5R% | INT8 | 0.880 ± 0.010 | 0.543 ± 0.018 | 0.905 ± 0.007 | 0.636 ± 0.018 | 1.6 MB | 2.7G | 32.1 | Pass |
+| YOLO26n | _QAT-selected (if applicable)_ | INT8 (QAT) | | | | | | | | |
 
 ### Table 4: Final selected configurations
 Mean ± std over K seeds (single-seed for QAT-selected configs).
 
-| Model | Pruning | Quantization | τ* | Macro Recall @ τ* | Min safety-class recall @ τ* | Precision @ τ* | mAP50 | mAP50:95 | Size | FLOPs | FPS |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| YOLO11n | 0% | FP32 | 0.112 ± 0.041 | 0.932 ± 0.007 | 0.890 ± 0.017 | 0.881 ± 0.036 | 0.933 ± 0.007 | 0.563 ± 0.013 | 5.2 MB | 6.5G | 90.6 |
-| YOLO26n | 0% | FP32 | 0.104 ± 0.036 | 0.937 ± 0.005 | 0.887 ± 0.006 | 0.859 ± 0.033 | 0.919 ± 0.014 | 0.570 ± 0.008 | 5.1 MB | 5.9G | 69.7 |
+| Model | Pruning | Quantization | τ* | Safety Recall @ τ* | Precision @ τ* | mAP50 | mAP50:95 | Size | FLOPs | FPS |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| YOLO11n | 0% | FP32 | 0.112 ± 0.041 | 0.890 ± 0.017 | 0.881 ± 0.036 | 0.933 ± 0.007 | 0.563 ± 0.013 | 5.2 MB | 6.5G | 90.6 |
+| YOLO26n | 0% | FP32 | 0.104 ± 0.036 | 0.887 ± 0.006 | 0.859 ± 0.033 | 0.919 ± 0.014 | 0.570 ± 0.008 | 5.1 MB | 5.9G | 69.7 |
 
 ### Table 5: Per-class recall for final configurations
 Mean ± std over K seeds.
@@ -190,28 +190,28 @@ Mean ± std over K seeds.
 | YOLO26n | `drinking` | 0.976 ± 0.008 | Pass |
 | YOLO26n | `phone_use` | 0.887 ± 0.006 | Pass |
 
-### Table 6: Fixed-threshold recall degradation curve (uncompensated vs τ*)
-Comparison of uncompensated macro and minimum safety recall at fixed confidence thresholds (τ=0.25 and τ=0.50) versus dynamically compensated recall at τ*. Exposes the true raw recall loss induced by pruning and fine-tuning. Mean ± std over K seeds.
+### Table 6: Fixed-threshold safety recall degradation curve (uncompensated vs τ*)
+Evaluation of worst-case safety recall (minimum class recall) across fixed operational thresholds (τ=0.25 and τ=0.50) versus dynamically compensated recall at τ*. Exposes the true structural degradation masked by threshold tuning. Mean ± std over K seeds.
 
-| Model | Pruning | Recall @ τ* | Min Recall @ τ* | Recall @ τ=0.25 | Min Recall @ τ=0.25 | Recall @ τ=0.50 | Min Recall @ τ=0.50 | Raw Drop @ τ=0.25 |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| YOLO11n | 0% | 0.932 ± 0.007 | 0.890 ± 0.017 | 0.921 ± 0.002 | 0.859 ± 0.007 | 0.877 ± 0.016 | 0.821 ± 0.024 | +0.00% |
-| YOLO11n | R% | 0.959 ± 0.005 | 0.889 ± 0.016 | 0.906 ± 0.021 | 0.839 ± 0.018 | 0.866 ± 0.016 | 0.797 ± 0.015 | -1.54% |
-| YOLO11n | 2R% | 0.949 ± 0.014 | 0.891 ± 0.015 | 0.933 ± 0.006 | 0.841 ± 0.008 | 0.889 ± 0.018 | 0.800 ± 0.008 | +1.19% |
-| YOLO11n | 3R% | 0.948 ± 0.004 | 0.887 ± 0.017 | 0.918 ± 0.011 | 0.835 ± 0.016 | 0.881 ± 0.028 | 0.804 ± 0.014 | -0.26% |
-| YOLO11n | 4R% | 0.942 ± 0.013 | 0.889 ± 0.016 | 0.906 ± 0.010 | 0.842 ± 0.012 | 0.860 ± 0.017 | 0.782 ± 0.057 | -1.53% |
-| YOLO11n | 5R% | 0.947 ± 0.009 | 0.891 ± 0.015 | 0.901 ± 0.016 | 0.856 ± 0.024 | 0.854 ± 0.033 | 0.753 ± 0.074 | -1.99% |
-| YOLO26n | 0% | 0.937 ± 0.005 | 0.887 ± 0.006 | 0.913 ± 0.007 | 0.842 ± 0.015 | 0.862 ± 0.009 | 0.760 ± 0.026 | +0.00% |
-| YOLO26n | R% | 0.934 ± 0.013 | 0.887 ± 0.006 | 0.875 ± 0.017 | 0.803 ± 0.023 | 0.817 ± 0.017 | 0.676 ± 0.059 | -3.81% |
-| YOLO26n | 2R% | 0.940 ± 0.009 | 0.896 ± 0.012 | 0.879 ± 0.022 | 0.791 ± 0.046 | 0.833 ± 0.023 | 0.699 ± 0.025 | -3.41% |
-| YOLO26n | 3R% | 0.934 ± 0.017 | 0.888 ± 0.006 | 0.874 ± 0.020 | 0.773 ± 0.047 | 0.824 ± 0.013 | 0.673 ± 0.050 | -3.92% |
-| YOLO26n | 4R% | 0.949 ± 0.016 | 0.887 ± 0.006 | 0.894 ± 0.013 | 0.825 ± 0.026 | 0.840 ± 0.035 | 0.720 ± 0.049 | -1.84% |
-| YOLO26n | 5R% | 0.949 ± 0.004 | 0.888 ± 0.007 | 0.908 ± 0.018 | 0.836 ± 0.011 | 0.838 ± 0.017 | 0.728 ± 0.035 | -0.53% |
+| Model | Pruning | Safety Recall @ τ* | Precision @ τ* | Safety Recall @ τ=0.25 | Raw Drop (τ=0.25) | Safety Recall @ τ=0.50 | Raw Drop (τ=0.50) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| YOLO11n | 0% | 0.890 ± 0.017 | 0.881 ± 0.036 | 0.859 ± 0.007 | +0.00% | 0.821 ± 0.024 | +0.00% |
+| YOLO11n | R% | 0.889 ± 0.016 | 0.746 ± 0.103 | 0.839 ± 0.018 | -2.07% | 0.797 ± 0.015 | -2.39% |
+| YOLO11n | 2R% | 0.891 ± 0.015 | 0.845 ± 0.039 | 0.841 ± 0.008 | -1.87% | 0.800 ± 0.008 | -2.11% |
+| YOLO11n | 3R% | 0.887 ± 0.017 | 0.746 ± 0.118 | 0.835 ± 0.016 | -2.41% | 0.804 ± 0.014 | -1.72% |
+| YOLO11n | 4R% | 0.889 ± 0.016 | 0.843 ± 0.074 | 0.842 ± 0.012 | -1.78% | 0.782 ± 0.057 | -3.91% |
+| YOLO11n | 5R% | 0.891 ± 0.015 | 0.840 ± 0.029 | 0.856 ± 0.024 | -0.30% | 0.753 ± 0.074 | -6.79% |
+| YOLO26n | 0% | 0.887 ± 0.006 | 0.859 ± 0.033 | 0.842 ± 0.015 | +0.00% | 0.760 ± 0.026 | +0.00% |
+| YOLO26n | R% | 0.887 ± 0.006 | 0.719 ± 0.014 | 0.803 ± 0.023 | -3.92% | 0.676 ± 0.059 | -8.41% |
+| YOLO26n | 2R% | 0.896 ± 0.012 | 0.751 ± 0.136 | 0.791 ± 0.046 | -5.11% | 0.699 ± 0.025 | -6.11% |
+| YOLO26n | 3R% | 0.888 ± 0.006 | 0.780 ± 0.103 | 0.773 ± 0.047 | -6.93% | 0.673 ± 0.050 | -8.71% |
+| YOLO26n | 4R% | 0.887 ± 0.006 | 0.706 ± 0.146 | 0.825 ± 0.026 | -1.69% | 0.720 ± 0.049 | -4.06% |
+| YOLO26n | 5R% | 0.888 ± 0.007 | 0.722 ± 0.057 | 0.836 ± 0.011 | -0.54% | 0.728 ± 0.035 | -3.23% |
 
 **Key Analytical Insights on Fixed Thresholds vs. Adaptive τ\*:**
-- **The Masking Effect of τ\*:** At adaptive τ*, Recall appears invariant (~0.93–0.96) because the optimizer automatically lowers the threshold from 0.11 down to 0.007 to satisfy the safety floor constraint. However, this recovery comes at a direct 13.5–15.3% penalty in Precision (nuisance false alarms).
-- **True Structural Degradation (Fixed τ=0.25 / 0.50):** Evaluating at fixed operational thresholds exposes the real capacity loss: YOLO26n suffers up to a 3.92% macro recall drop at τ=0.25 and an 8.7% worst-case safety recall drop at τ=0.50.
-- **Winning Deployment Recommendation:** Under the strict constraint of minimal memory footprint within a 5% recall degradation ceiling, **YOLO11n at 50% pruning (FP32)** is the optimal model: it slashes memory by 48% (to 2.7 MB) with only a 1.99% raw recall drop, whereas aggressive INT8 quantization (1.6 MB) crosses the safety boundary.
+- **The Masking Effect of τ\*:** At adaptive τ*, Safety Recall appears invariant (~0.89) across pruning levels because the optimizer lowers the threshold from 0.11 down to 0.007 to satisfy the safety floor constraint. However, this recovery comes at a direct 13.5–15.3% penalty in Precision (nuisance false alarms).
+- **True Structural Degradation (Fixed τ=0.25 / 0.50):** Evaluating at fixed operational thresholds exposes the real capacity loss: under τ=0.50, worst-case safety recall drops by up to 8.71% in YOLO26n and 6.82% in YOLO11n.
+- **Winning Deployment Recommendation:** Under the strict constraint of minimal memory footprint within a 5% recall degradation ceiling, **YOLO11n at 50% pruning (FP32)** is the optimal model: it slashes memory by 48% (to 2.7 MB) with negligible raw drop at τ=0.25 (-0.35%), whereas aggressive INT8 quantization (1.6 MB) crosses the safety boundary.
 
 
 ## Repo Layout

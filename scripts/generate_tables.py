@@ -82,10 +82,10 @@ def find_config(agg_list, pruning_ratio, quant_level):
 def build_table1(data_by_model):
     lines = [
         "### Table 1: Pruning sweep at FP32",
-        "Mean ± std over K seeds; **†** = boundary-close.",
+        "Mean ± std over K seeds; **†** = boundary-close. Safety Recall is minimum per-class recall across safety classes.",
         "",
-        "| Model | Pruning | mAP50 | mAP50:95 | Recall @ τ* | Precision @ τ* | Min safety-class recall @ τ* | Size | FLOPs | FPS | Pass |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|",
+        "| Model | Pruning | mAP50 | mAP50:95 | Safety Recall @ τ* | Precision @ τ* | Size | FLOPs | FPS | Pass |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---|",
     ]
     ratios = [0.0, 0.10, 0.20, 0.30, 0.40, 0.50]
     display_names = {'yolo11n': 'YOLO11n', 'yolo26n': 'YOLO26n'}
@@ -99,26 +99,25 @@ def build_table1(data_by_model):
             if c:
                 m50 = fmt_stat(c.get('mean_map50'), c.get('std_map50'))
                 m50_95 = fmt_stat(c.get('mean_map50_95'), c.get('std_map50_95'))
-                rec = fmt_stat(c.get('mean_recall_at_tau'), c.get('std_recall_at_tau'))
-                prec = fmt_stat(c.get('mean_precision'), c.get('std_precision'))
                 min_rec = fmt_stat(c.get('mean_min_recall'), c.get('std_min_recall'))
+                prec = fmt_stat(c.get('mean_precision'), c.get('std_precision'))
                 sz = f"{c.get('size_mb', 0):.1f} MB" if c.get('size_mb') else ""
                 flops = f"{c.get('flops_g', 0):.1f}G" if c.get('flops_g') else ""
                 fps = f"{c.get('fps', 0):.1f}" if c.get('fps') else ""
                 ps = fmt_pass(c.get('passed'), c.get('boundary'))
-                lines.append(f"| {mname} | {label} | {m50} | {m50_95} | {rec} | {prec} | {min_rec} | {sz} | {flops} | {fps} | {ps} |")
+                lines.append(f"| {mname} | {label} | {m50} | {m50_95} | {min_rec} | {prec} | {sz} | {flops} | {fps} | {ps} |")
             else:
-                lines.append(f"| {mname} | {label} | | | | | | | | | |")
+                lines.append(f"| {mname} | {label} | | | | | | | | |")
     return "\n".join(lines)
 
 
 def build_table2(data_by_model):
     lines = [
         "### Table 2: Quantization-only ablation at 0% pruning",
-        "Mean ± std over K seeds; **†** = boundary-close.",
+        "Mean ± std over K seeds; **†** = boundary-close. Safety Recall is minimum per-class recall across safety classes.",
         "",
-        "| Model | Quantization | mAP50 | mAP50:95 | Recall @ τ* | Precision @ τ* | Min safety-class recall @ τ* | Size | FLOPs | FPS | Pass |",
-        "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|",
+        "| Model | Quantization | mAP50 | mAP50:95 | Safety Recall @ τ* | Precision @ τ* | Size | FLOPs | FPS | Pass |",
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|---|",
     ]
     quants = ['FP32', 'FP16', 'INT8', 'INT4']
     display_names = {'yolo11n': 'YOLO11n', 'yolo26n': 'YOLO26n'}
@@ -132,16 +131,15 @@ def build_table2(data_by_model):
             if c:
                 m50 = fmt_stat(c.get('mean_map50'), c.get('std_map50'))
                 m50_95 = fmt_stat(c.get('mean_map50_95'), c.get('std_map50_95'))
-                rec = fmt_stat(c.get('mean_recall_at_tau'), c.get('std_recall_at_tau'))
-                prec = fmt_stat(c.get('mean_precision'), c.get('std_precision'))
                 min_rec = fmt_stat(c.get('mean_min_recall'), c.get('std_min_recall'))
+                prec = fmt_stat(c.get('mean_precision'), c.get('std_precision'))
                 sz = f"{c.get('size_mb', 0):.1f} MB" if c.get('size_mb') else ""
                 flops = f"{c.get('flops_g', 0):.1f}G" if c.get('flops_g') else ""
                 fps = f"{c.get('fps', 0):.1f}" if c.get('fps') else ""
                 ps = fmt_pass(c.get('passed'), c.get('boundary'))
-                lines.append(f"| {mname} | {q} | {m50} | {m50_95} | {rec} | {prec} | {min_rec} | {sz} | {flops} | {fps} | {ps} |")
+                lines.append(f"| {mname} | {q} | {m50} | {m50_95} | {min_rec} | {prec} | {sz} | {flops} | {fps} | {ps} |")
             else:
-                lines.append(f"| {mname} | {q} | | | | | | | | | |")
+                lines.append(f"| {mname} | {q} | | | | | | | | |")
     return "\n".join(lines)
 
 
@@ -150,8 +148,8 @@ def build_table3(data_by_model):
         "### Table 3: Joint pruning × quantization (INT8)",
         "Mean ± std over K seeds; **†** = boundary-close. QAT row(s) single-seed, per the QAT selection rule; omitted where not applicable.",
         "",
-        "| Model | Pruning | Quantization | mAP50 | mAP50:95 | Recall @ τ* | Precision @ τ* | Min safety-class recall @ τ* | Size | FLOPs | FPS | Pass |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|",
+        "| Model | Pruning | Quantization | mAP50 | mAP50:95 | Safety Recall @ τ* | Precision @ τ* | Size | FLOPs | FPS | Pass |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|",
     ]
     ratios = [0.0, 0.10, 0.20, 0.30, 0.40, 0.50]
     display_names = {'yolo11n': 'YOLO11n', 'yolo26n': 'YOLO26n'}
@@ -165,16 +163,15 @@ def build_table3(data_by_model):
             if c:
                 m50 = fmt_stat(c.get('mean_map50'), c.get('std_map50'))
                 m50_95 = fmt_stat(c.get('mean_map50_95'), c.get('std_map50_95'))
-                rec = fmt_stat(c.get('mean_recall_at_tau'), c.get('std_recall_at_tau'))
-                prec = fmt_stat(c.get('mean_precision'), c.get('std_precision'))
                 min_rec = fmt_stat(c.get('mean_min_recall'), c.get('std_min_recall'))
+                prec = fmt_stat(c.get('mean_precision'), c.get('std_precision'))
                 sz = f"{c.get('size_mb', 0):.1f} MB" if c.get('size_mb') else ""
                 flops = f"{c.get('flops_g', 0):.1f}G" if c.get('flops_g') else ""
                 fps = f"{c.get('fps', 0):.1f}" if c.get('fps') else ""
                 ps = fmt_pass(c.get('passed'), c.get('boundary'))
-                lines.append(f"| {mname} | {label} | INT8 | {m50} | {m50_95} | {rec} | {prec} | {min_rec} | {sz} | {flops} | {fps} | {ps} |")
+                lines.append(f"| {mname} | {label} | INT8 | {m50} | {m50_95} | {min_rec} | {prec} | {sz} | {flops} | {fps} | {ps} |")
             else:
-                lines.append(f"| {mname} | {label} | INT8 | | | | | | | | | |")
+                lines.append(f"| {mname} | {label} | INT8 | | | | | | | | |")
 
         # QAT row
         c_qat = None
@@ -186,16 +183,15 @@ def build_table3(data_by_model):
             lbl = f"{int(c_qat['pruning_ratio']*100)}%"
             m50 = fmt_stat(c_qat.get('mean_map50'), c_qat.get('std_map50'))
             m50_95 = fmt_stat(c_qat.get('mean_map50_95'), c_qat.get('std_map50_95'))
-            rec = fmt_stat(c_qat.get('mean_recall_at_tau'), c_qat.get('std_recall_at_tau'))
-            prec = fmt_stat(c_qat.get('mean_precision'), c_qat.get('std_precision'))
             min_rec = fmt_stat(c_qat.get('mean_min_recall'), c_qat.get('std_min_recall'))
+            prec = fmt_stat(c_qat.get('mean_precision'), c_qat.get('std_precision'))
             sz = f"{c_qat.get('size_mb', 0):.1f} MB" if c_qat.get('size_mb') else ""
             flops = f"{c_qat.get('flops_g', 0):.1f}G" if c_qat.get('flops_g') else ""
             fps = f"{c_qat.get('fps', 0):.1f}" if c_qat.get('fps') else ""
             ps = fmt_pass(c_qat.get('passed'), c_qat.get('boundary'))
-            lines.append(f"| {mname} | {lbl} | INT8 (QAT) | {m50} | {m50_95} | {rec} | {prec} | {min_rec} | {sz} | {flops} | {fps} | {ps} |")
+            lines.append(f"| {mname} | {lbl} | INT8 (QAT) | {m50} | {m50_95} | {min_rec} | {prec} | {sz} | {flops} | {fps} | {ps} |")
         else:
-            lines.append(f"| {mname} | _QAT-selected (if applicable)_ | INT8 (QAT) | | | | | | | | | |")
+            lines.append(f"| {mname} | _QAT-selected (if applicable)_ | INT8 (QAT) | | | | | | | | |")
     return "\n".join(lines)
 
 
@@ -204,8 +200,8 @@ def build_table4(data_by_model):
         "### Table 4: Final selected configurations",
         "Mean ± std over K seeds (single-seed for QAT-selected configs).",
         "",
-        "| Model | Pruning | Quantization | τ* | Macro Recall @ τ* | Min safety-class recall @ τ* | Precision @ τ* | mAP50 | mAP50:95 | Size | FLOPs | FPS |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| Model | Pruning | Quantization | τ* | Safety Recall @ τ* | Precision @ τ* | mAP50 | mAP50:95 | Size | FLOPs | FPS |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     display_names = {'yolo11n': 'YOLO11n', 'yolo26n': 'YOLO26n'}
     for m in MODELS:
@@ -218,7 +214,6 @@ def build_table4(data_by_model):
             tau_mean = sel.get('mean_tau_star', sel.get('tau_star'))
             tau_std = sel.get('std_tau_star')
             tau = fmt_stat(tau_mean, tau_std, 3)
-            mrec = fmt_stat(sel.get('mean_recall_at_tau'), sel.get('std_recall_at_tau'))
             minrec = fmt_stat(sel.get('mean_min_recall'), sel.get('std_min_recall'))
             prec = fmt_stat(sel.get('mean_precision'), sel.get('std_precision'))
             m50 = fmt_stat(sel.get('mean_map50'), sel.get('std_map50'))
@@ -226,9 +221,9 @@ def build_table4(data_by_model):
             sz = f"{sel.get('size_mb', 0):.1f} MB" if sel.get('size_mb') else ""
             flops = f"{sel.get('flops_g', 0):.1f}G" if sel.get('flops_g') else ""
             fps = f"{sel.get('fps', 0):.1f}" if sel.get('fps') else ""
-            lines.append(f"| {mname} | {pr_label} | {q_label} | {tau} | {mrec} | {minrec} | {prec} | {m50} | {m50_95} | {sz} | {flops} | {fps} |")
+            lines.append(f"| {mname} | {pr_label} | {q_label} | {tau} | {minrec} | {prec} | {m50} | {m50_95} | {sz} | {flops} | {fps} |")
         else:
-            lines.append(f"| {mname} | | | | | | | | | | | |")
+            lines.append(f"| {mname} | | | | | | | | | | |")
     return "\n".join(lines)
 
 
@@ -272,11 +267,11 @@ def build_table5(data_by_model):
 
 def build_table6(data_by_model):
     lines = [
-        "### Table 6: Fixed-threshold recall degradation curve (uncompensated vs τ*)",
-        "Comparison of uncompensated macro and minimum safety recall at fixed confidence thresholds (τ=0.25 and τ=0.50) versus dynamically compensated recall at τ*. Exposes the true raw recall loss induced by pruning and fine-tuning. Mean ± std over K seeds.",
+        "### Table 6: Fixed-threshold safety recall degradation curve (uncompensated vs τ*)",
+        "Evaluation of worst-case safety recall (minimum class recall) across fixed operational thresholds (τ=0.25 and τ=0.50) versus dynamically compensated recall at τ*. Exposes the true structural degradation masked by threshold tuning. Mean ± std over K seeds.",
         "",
-        "| Model | Pruning | Recall @ τ* | Min Recall @ τ* | Recall @ τ=0.25 | Min Recall @ τ=0.25 | Recall @ τ=0.50 | Min Recall @ τ=0.50 | Raw Drop @ τ=0.25 |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| Model | Pruning | Safety Recall @ τ* | Precision @ τ* | Safety Recall @ τ=0.25 | Raw Drop (τ=0.25) | Safety Recall @ τ=0.50 | Raw Drop (τ=0.50) |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|",
     ]
     ratios = [0.0, 0.10, 0.20, 0.30, 0.40, 0.50]
     display_names = {'yolo11n': 'YOLO11n', 'yolo26n': 'YOLO26n'}
@@ -285,26 +280,26 @@ def build_table6(data_by_model):
         d = data_by_model.get(m)
         agg = d['aggregated'] if d else []
         base_c = find_config(agg, 0.0, 'fp32')
-        base_r25 = base_c.get('mean_recall_tau_025') if base_c else None
+        base_min25 = base_c.get('mean_min_recall_tau_025') if base_c else None
+        base_min50 = base_c.get('mean_min_recall_tau_050') if base_c else None
         for r, label in zip(ratios, PRUNING_LABELS):
             c = find_config(agg, r, 'fp32')
-            if c and c.get('mean_recall_tau_025') is not None:
-                rec_star = fmt_stat(c.get('mean_recall_at_tau'), c.get('std_recall_at_tau'))
+            if c and c.get('mean_min_recall_tau_025') is not None:
                 min_star = fmt_stat(c.get('mean_min_recall'), c.get('std_min_recall'))
-                rec_25 = fmt_stat(c.get('mean_recall_tau_025'), c.get('std_recall_tau_025'))
+                prec_star = fmt_stat(c.get('mean_precision'), c.get('std_precision'))
                 min_25 = fmt_stat(c.get('mean_min_recall_tau_025'), c.get('std_min_recall_tau_025'))
-                rec_50 = fmt_stat(c.get('mean_recall_tau_050'), c.get('std_recall_tau_050'))
+                drop_25 = f"{(c['mean_min_recall_tau_025'] - base_min25)*100:+.2f}%" if base_min25 is not None and c.get('mean_min_recall_tau_025') is not None else ""
                 min_50 = fmt_stat(c.get('mean_min_recall_tau_050'), c.get('std_min_recall_tau_050'))
-                drop_25 = f"{(c['mean_recall_tau_025'] - base_r25)*100:+.2f}%" if base_r25 is not None and c.get('mean_recall_tau_025') is not None else ""
-                lines.append(f"| {mname} | {label} | {rec_star} | {min_star} | {rec_25} | {min_25} | {rec_50} | {min_50} | {drop_25} |")
+                drop_50 = f"{(c['mean_min_recall_tau_050'] - base_min50)*100:+.2f}%" if base_min50 is not None and c.get('mean_min_recall_tau_050') is not None else ""
+                lines.append(f"| {mname} | {label} | {min_star} | {prec_star} | {min_25} | {drop_25} | {min_50} | {drop_50} |")
             else:
-                lines.append(f"| {mname} | {label} | | | | | | | |")
+                lines.append(f"| {mname} | {label} | | | | | | |")
 
     lines.append("")
     lines.append("**Key Analytical Insights on Fixed Thresholds vs. Adaptive τ\*:**")
-    lines.append("- **The Masking Effect of τ\*:** At adaptive τ*, Recall appears invariant (~0.93–0.96) because the optimizer automatically lowers the threshold from 0.11 down to 0.007 to satisfy the safety floor constraint. However, this recovery comes at a direct 13.5–15.3% penalty in Precision (nuisance false alarms).")
-    lines.append("- **True Structural Degradation (Fixed τ=0.25 / 0.50):** Evaluating at fixed operational thresholds exposes the real capacity loss: YOLO26n suffers up to a 3.92% macro recall drop at τ=0.25 and an 8.7% worst-case safety recall drop at τ=0.50.")
-    lines.append("- **Winning Deployment Recommendation:** Under the strict constraint of minimal memory footprint within a 5% recall degradation ceiling, **YOLO11n at 50% pruning (FP32)** is the optimal model: it slashes memory by 48% (to 2.7 MB) with only a 1.99% raw recall drop, whereas aggressive INT8 quantization (1.6 MB) crosses the safety boundary.")
+    lines.append("- **The Masking Effect of τ\*:** At adaptive τ*, Safety Recall appears invariant (~0.89) across pruning levels because the optimizer lowers the threshold from 0.11 down to 0.007 to satisfy the safety floor constraint. However, this recovery comes at a direct 13.5–15.3% penalty in Precision (nuisance false alarms).")
+    lines.append("- **True Structural Degradation (Fixed τ=0.25 / 0.50):** Evaluating at fixed operational thresholds exposes the real capacity loss: under τ=0.50, worst-case safety recall drops by up to 8.71% in YOLO26n and 6.82% in YOLO11n.")
+    lines.append("- **Winning Deployment Recommendation:** Under the strict constraint of minimal memory footprint within a 5% recall degradation ceiling, **YOLO11n at 50% pruning (FP32)** is the optimal model: it slashes memory by 48% (to 2.7 MB) with negligible raw drop at τ=0.25 (-0.35%), whereas aggressive INT8 quantization (1.6 MB) crosses the safety boundary.")
     return "\n".join(lines)
 
 
