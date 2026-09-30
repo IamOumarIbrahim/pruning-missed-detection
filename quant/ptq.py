@@ -42,6 +42,10 @@ def export_ptq(model_path, quant_level, output_dir, data_yaml=None,
         raise ValueError(f"Unknown quant_level: {quant_level}")
 
     try:
+        try:
+            import modelopt
+        except ImportError:
+            raise RuntimeError("nvidia-modelopt is not installed; skipping TensorRT to use ONNX Runtime fallback directly")
         exported_path = Path(model.export(**kwargs))
         target = Path(output_dir) / f"model_{quant_level}.engine"
         if exported_path.resolve() != target.resolve():
@@ -50,7 +54,7 @@ def export_ptq(model_path, quant_level, output_dir, data_yaml=None,
             exported_path.rename(target)
         return str(target)
     except Exception as e:
-        print(f"TensorRT export failed ({e}). Falling back to ONNX Runtime...")
+        print(f"TensorRT export bypassed/failed ({e}). Falling back to ONNX Runtime...")
         onnx_kwargs = dict(format='onnx', imgsz=imgsz, device=device)
         if quant_level == 'fp16':
             onnx_kwargs['half'] = True

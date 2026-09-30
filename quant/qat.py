@@ -29,27 +29,42 @@ def run_qat(model_path, data_yaml, output_dir, epochs=100, imgsz=640,
     Returns:
         dict with model_path (.pt) and engine_path (.engine).
     """
-    Path(output_dir).mkdir(parents=True, exist_ok=True)
-    model = YOLO(str(model_path))
+    candidate_weights = [
+        Path(output_dir) / 'train' / 'qat' / 'weights' / 'best.pt',
+        Path('runs') / 'detect' / output_dir / 'train' / 'qat' / 'weights' / 'best.pt',
+    ]
+    best_weights = None
+    for p in candidate_weights:
+        if p.exists() and p.stat().st_size > 0:
+            best_weights = p
+            break
 
-    model.train(
-        trainer=PrunedDetectionTrainer,
-        data=str(data_yaml),
-        epochs=epochs,
-        batch=batch,
-        imgsz=imgsz,
-        patience=0,
-        amp=True,
-        lr0=0.001,
-        lrf=0.01,
-        seed=seed,
-        project=str(Path(output_dir) / 'train'),
-        name='qat',
-        exist_ok=True,
-        device=device,
-    )
+    if best_weights is None:
+        model = YOLO(str(model_path))
+        model.train(
+            trainer=PrunedDetectionTrainer,
+            data=str(data_yaml),
+            epochs=epochs,
+            batch=batch,
+            imgsz=imgsz,
+            patience=0,
+            amp=True,
+            lr0=0.001,
+            lrf=0.01,
+            seed=seed,
+            project=str(Path(output_dir) / 'train'),
+            name='qat',
+            exist_ok=True,
+            device=device,
+        )
+        for p in candidate_weights:
+            if p.exists() and p.stat().st_size > 0:
+                best_weights = p
+                break
 
-    best_weights = Path(output_dir) / 'train' / 'qat' / 'weights' / 'best.pt'
+    if best_weights is None or not best_weights.exists():
+        raise FileNotFoundError(f"Could not locate best.pt in any candidate paths: {candidate_weights}")
+
     engine_path = export_ptq(
         str(best_weights), 'int8', str(output_dir),
         data_yaml=data_yaml, imgsz=imgsz, device=device,
@@ -59,3 +74,4 @@ def run_qat(model_path, data_yaml, output_dir, epochs=100, imgsz=640,
         'model_path': str(best_weights),
         'engine_path': str(engine_path),
     }
+

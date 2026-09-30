@@ -54,6 +54,12 @@ def main():
             fps_info = {}
 
             for seed in args.seeds:
+                out_dir = (Path('results') / model_name / 'joint_int8'
+                           / ratio_label / f'seed_{seed}')
+                if (out_dir / 'metrics.json').exists():
+                    print(f'  Seed {seed}: already complete, skipping.')
+                    continue
+
                 print(f'  Seed {seed}:')
 
                 if mult == 0:
