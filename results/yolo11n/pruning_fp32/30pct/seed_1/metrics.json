@@ -1,0 +1,74 @@
+{
+  "model": "yolo11n",
+  "pruning_ratio": 0.30000000000000004,
+  "pruning_label": "3R",
+  "quantization": "fp32",
+  "seed": 1,
+  "weights_path": "C:\\Dev\\repos\\Public repos\\research\\pruning-missed-detections\\runs\\detect\\models\\yolo11n\\pruning_fp32\\30pct\\seed_1\\weights\\best.pt",
+  "tau_star": 0.007790167350322008,
+  "feasible": true,
+  "map50": 0.9355640693713216,
+  "map50_95": 0.5728734648566578,
+  "recall_at_tau": 0.9510814889336016,
+  "precision_at_tau": 0.774281805745554,
+  "min_safety_recall": 0.9114688128772636,
+  "per_class_recall": {
+    "yawning": 1.0,
+    "hand_over_mouth": 0.9285714285714286,
+    "drinking": 0.9642857142857143,
+    "phone_use": 0.9114688128772636
+  },
+  "size_mb": 3.495333671569824,
+  "flops_g": 4.2984,
+  "fps": 62.8,
+  "r_floor_k": 0.909758551307847,
+  "params": 1668655,
+  "parameters": 1668655,
+  "latency_ms": 15.91,
+  "fixed_eval": {
+    "tau_25": {
+      "target_tau": 0.25,
+      "actual_tau": 0.2502502502502503,
+      "macro_recall": 0.9106,
+      "min_recall": 0.8491,
+      "macro_precision": 0.8478,
+      "per_class_recall": {
+        "yawning": 0.931,
+        "hand_over_mouth": 0.9286,
+        "drinking": 0.9336,
+        "phone_use": 0.8491
+      },
+      "per_class_precision": {
+        "yawning": 0.8366,
+        "hand_over_mouth": 0.6715,
+        "drinking": 0.9289,
+        "phone_use": 0.9542
+      }
+    },
+    "tau_50": {
+      "target_tau": 0.5,
+      "actual_tau": 0.4994994994994995,
+      "macro_recall": 0.8716,
+      "min_recall": 0.8228,
+      "macro_precision": 0.8789,
+      "per_class_recall": {
+        "yawning": 0.8243,
+        "hand_over_mouth": 0.9286,
+        "drinking": 0.9107,
+        "phone_use": 0.8228
+      },
+      "per_class_precision": {
+        "yawning": 0.8718,
+        "hand_over_mouth": 0.7278,
+        "drinking": 0.9514,
+        "phone_use": 0.9646
+      }
+    }
+  },
+  "recall_tau_025": 0.9106,
+  "min_recall_tau_025": 0.8491,
+  "precision_tau_025": 0.8478,
+  "recall_tau_050": 0.8716,
+  "min_recall_tau_050": 0.8228,
+  "precision_tau_050": 0.8789
+}

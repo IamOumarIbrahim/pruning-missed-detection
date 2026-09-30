@@ -1,0 +1,24 @@
+{
+  "model": "yolo26n",
+  "pruning_ratio": 0.30000000000000004,
+  "pruning_label": "3R",
+  "quantization": "int8",
+  "seed": 1,
+  "engine_path": "models\\yolo26n\\joint_int8\\30pct\\seed_1\\model_int8.onnx",
+  "tau_star": 0.0019453735322923632,
+  "feasible": true,
+  "map50": 0.9016901087885034,
+  "map50_95": 0.5643585352110556,
+  "recall_at_tau": 0.9474974849094567,
+  "precision_at_tau": 0.8348484848484848,
+  "min_safety_recall": 0.8792756539235412,
+  "per_class_recall": {
+    "yawning": 1.0,
+    "hand_over_mouth": 0.9285714285714286,
+    "drinking": 0.9821428571428571,
+    "phone_use": 0.8792756539235412
+  },
+  "size_mb": 2.0046768188476562,
+  "fps": 26.908736224721604,
+  "r_floor_k": 0.8775653923541247
+}

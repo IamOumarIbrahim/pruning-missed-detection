@@ -1,0 +1,20 @@
+{
+  "pruning_ratio": 0.5,
+  "quantization": "fp32",
+  "mean_min_recall": 0.8879946344735078,
+  "std_min_recall": 0.006639500292831434,
+  "mean_precision": 0.722394749061173,
+  "std_precision": 0.05703762738484218,
+  "mean_map50": 0.9131535499300885,
+  "std_map50": 0.004380961776973578,
+  "mean_map50_95": 0.566708464479706,
+  "std_map50_95": 0.004033888385401489,
+  "mean_recall_at_tau": 0.949091010710729,
+  "std_recall_at_tau": 0.003646299984699224,
+  "fps": 94.74923877300095,
+  "size_mb": 2.7671642303466797,
+  "flops_g": null,
+  "passed": true,
+  "boundary": true,
+  "n_seeds": 3
+}

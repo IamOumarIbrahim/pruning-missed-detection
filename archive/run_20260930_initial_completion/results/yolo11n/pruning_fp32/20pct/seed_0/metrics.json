@@ -1,0 +1,25 @@
+{
+  "model": "yolo11n",
+  "pruning_ratio": 0.2,
+  "pruning_label": "2R",
+  "quantization": "fp32",
+  "seed": 0,
+  "weights_path": "C:\\Dev\\repos\\Public repos\\research\\pruning-missed-detections\\runs\\detect\\models\\yolo11n\\pruning_fp32\\20pct\\seed_0\\weights\\best.pt",
+  "tau_star": 0.01145781395368155,
+  "feasible": true,
+  "map50": 0.9368662266164557,
+  "map50_95": 0.5665155668959198,
+  "recall_at_tau": 0.957935110663984,
+  "precision_at_tau": 0.7905982905982906,
+  "min_safety_recall": 0.8853118712273642,
+  "per_class_recall": {
+    "yawning": 1.0,
+    "hand_over_mouth": 0.9642857142857143,
+    "drinking": 0.9821428571428571,
+    "phone_use": 0.8853118712273642
+  },
+  "size_mb": 4.023837089538574,
+  "flops_g": null,
+  "fps": 97.89703463946431,
+  "r_floor_k": 0.8795774647887323
+}

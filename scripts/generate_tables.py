@@ -215,7 +215,9 @@ def build_table4(data_by_model):
         if sel:
             pr_label = f"{int(sel['pruning_ratio']*100)}%"
             q_label = sel['quantization'].upper()
-            tau = fmt_stat(sel.get('tau_star'), None, 4) if 'tau_star' in sel else ""
+            tau_mean = sel.get('mean_tau_star', sel.get('tau_star'))
+            tau_std = sel.get('std_tau_star')
+            tau = fmt_stat(tau_mean, tau_std, 3)
             mrec = fmt_stat(sel.get('mean_recall_at_tau'), sel.get('std_recall_at_tau'))
             minrec = fmt_stat(sel.get('mean_min_recall'), sel.get('std_min_recall'))
             prec = fmt_stat(sel.get('mean_precision'), sel.get('std_precision'))
@@ -268,6 +270,38 @@ def build_table5(data_by_model):
     return "\n".join(lines)
 
 
+def build_table6(data_by_model):
+    lines = [
+        "### Table 6: Fixed-threshold recall degradation curve (uncompensated vs τ*)",
+        "Comparison of uncompensated macro and minimum safety recall at fixed confidence thresholds (τ=0.25 and τ=0.50) versus dynamically compensated recall at τ*. Exposes the true raw recall loss induced by pruning and fine-tuning. Mean ± std over K seeds.",
+        "",
+        "| Model | Pruning | Recall @ τ* | Min Recall @ τ* | Recall @ τ=0.25 | Min Recall @ τ=0.25 | Recall @ τ=0.50 | Min Recall @ τ=0.50 | Raw Drop @ τ=0.25 |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
+    ]
+    ratios = [0.0, 0.10, 0.20, 0.30, 0.40, 0.50]
+    display_names = {'yolo11n': 'YOLO11n', 'yolo26n': 'YOLO26n'}
+    for m in MODELS:
+        mname = display_names.get(m, m)
+        d = data_by_model.get(m)
+        agg = d['aggregated'] if d else []
+        base_c = find_config(agg, 0.0, 'fp32')
+        base_r25 = base_c.get('mean_recall_tau_025') if base_c else None
+        for r, label in zip(ratios, PRUNING_LABELS):
+            c = find_config(agg, r, 'fp32')
+            if c and c.get('mean_recall_tau_025') is not None:
+                rec_star = fmt_stat(c.get('mean_recall_at_tau'), c.get('std_recall_at_tau'))
+                min_star = fmt_stat(c.get('mean_min_recall'), c.get('std_min_recall'))
+                rec_25 = fmt_stat(c.get('mean_recall_tau_025'), c.get('std_recall_tau_025'))
+                min_25 = fmt_stat(c.get('mean_min_recall_tau_025'), c.get('std_min_recall_tau_025'))
+                rec_50 = fmt_stat(c.get('mean_recall_tau_050'), c.get('std_recall_tau_050'))
+                min_50 = fmt_stat(c.get('mean_min_recall_tau_050'), c.get('std_min_recall_tau_050'))
+                drop_25 = f"{(c['mean_recall_tau_025'] - base_r25)*100:+.2f}%" if base_r25 is not None and c.get('mean_recall_tau_025') is not None else ""
+                lines.append(f"| {mname} | {label} | {rec_star} | {min_star} | {rec_25} | {min_25} | {rec_50} | {min_50} | {drop_25} |")
+            else:
+                lines.append(f"| {mname} | {label} | | | | | | | |")
+    return "\n".join(lines)
+
+
 def update_readme(new_tables_block):
     readme_path = Path('README.md')
     if not readme_path.exists():
@@ -295,8 +329,9 @@ def main():
     t3 = build_table3(data_by_model)
     t4 = build_table4(data_by_model)
     t5 = build_table5(data_by_model)
+    t6 = build_table6(data_by_model)
 
-    combined_block = f"{t1}\n\n{t2}\n\n{t3}\n\n{t4}\n\n{t5}"
+    combined_block = f"{t1}\n\n{t2}\n\n{t3}\n\n{t4}\n\n{t5}\n\n{t6}"
     print(combined_block)
 
     if not args.no_readme:

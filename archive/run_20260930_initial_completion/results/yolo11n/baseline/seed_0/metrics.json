@@ -1,0 +1,26 @@
+{
+  "model": "yolo11n",
+  "pruning_ratio": 0.0,
+  "pruning_label": "0%",
+  "quantization": "fp32",
+  "seed": 0,
+  "weights_path": "models\\yolo11n\\baseline\\seed_0\\weights\\best.pt",
+  "tau_star": 0.10443534759734222,
+  "feasible": true,
+  "map50": 0.9233586623499352,
+  "map50_95": 0.5446902632211738,
+  "recall_at_tau": 0.9270318882994939,
+  "precision_at_tau": 0.8315629742033384,
+  "min_safety_recall": 0.8812877263581489,
+  "per_class_recall": {
+    "yawning": 0.9696969696969697,
+    "hand_over_mouth": 0.9285714285714286,
+    "drinking": 0.9285714285714286,
+    "phone_use": 0.8812877263581489
+  },
+  "size_mb": 5.229937553405762,
+  "flops_g": null,
+  "fps": 75.42432025254186,
+  "r_base_k": 0.9295774647887324,
+  "r_floor_k": 0.8795774647887323
+}

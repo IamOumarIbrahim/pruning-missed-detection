@@ -1,0 +1,75 @@
+{
+  "model": "yolo26n",
+  "pruning_ratio": 0.0,
+  "pruning_label": "0%",
+  "quantization": "fp32",
+  "seed": 2,
+  "weights_path": "models\\yolo26n\\baseline\\seed_2\\weights\\best.pt",
+  "tau_star": 0.15387909073341596,
+  "feasible": true,
+  "map50": 0.9362611327391716,
+  "map50_95": 0.5747177132811282,
+  "recall_at_tau": 0.9327556246570331,
+  "precision_at_tau": 0.899513776337115,
+  "min_safety_recall": 0.8933601609657947,
+  "per_class_recall": {
+    "yawning": 0.9090909090909091,
+    "hand_over_mouth": 0.9642857142857143,
+    "drinking": 0.9642857142857143,
+    "phone_use": 0.8933601609657947
+  },
+  "size_mb": 5.149778366088867,
+  "flops_g": 5.8986,
+  "fps": 57.6,
+  "r_base_k": 0.9416498993963782,
+  "r_floor_k": 0.8916498993963782,
+  "params": 2505360,
+  "parameters": 2505360,
+  "latency_ms": 17.35,
+  "fixed_eval": {
+    "tau_25": {
+      "target_tau": 0.25,
+      "actual_tau": 0.2502502502502503,
+      "macro_recall": 0.9063,
+      "min_recall": 0.8331,
+      "macro_precision": 0.8532,
+      "per_class_recall": {
+        "yawning": 0.8331,
+        "hand_over_mouth": 0.9643,
+        "drinking": 0.9646,
+        "phone_use": 0.8632
+      },
+      "per_class_precision": {
+        "yawning": 0.8729,
+        "hand_over_mouth": 0.6614,
+        "drinking": 0.9153,
+        "phone_use": 0.9631
+      }
+    },
+    "tau_50": {
+      "target_tau": 0.5,
+      "actual_tau": 0.4994994994994995,
+      "macro_recall": 0.8723,
+      "min_recall": 0.752,
+      "macro_precision": 0.8799,
+      "per_class_recall": {
+        "yawning": 0.752,
+        "hand_over_mouth": 0.9643,
+        "drinking": 0.9464,
+        "phone_use": 0.8266
+      },
+      "per_class_precision": {
+        "yawning": 0.8612,
+        "hand_over_mouth": 0.7287,
+        "drinking": 0.9558,
+        "phone_use": 0.9739
+      }
+    }
+  },
+  "recall_tau_025": 0.9063,
+  "min_recall_tau_025": 0.8331,
+  "precision_tau_025": 0.8532,
+  "recall_tau_050": 0.8723,
+  "min_recall_tau_050": 0.752,
+  "precision_tau_050": 0.8799
+}

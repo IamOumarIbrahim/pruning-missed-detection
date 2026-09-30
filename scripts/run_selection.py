@@ -42,23 +42,37 @@ def aggregate(all_metrics, r_floor):
         m50 = [m['map50'] for m in seeds]
         m50_95 = [m['map50_95'] for m in seeds]
         mac_rec = [m['recall_at_tau'] for m in seeds]
+        tau_stars = [m['tau_star'] for m in seeds if 'tau_star' in m]
 
         mean_r = float(np.mean(recalls))
         std_r = float(np.std(recalls))
         mean_p = float(np.mean(precs))
+        mean_tau = float(np.mean(tau_stars)) if tau_stars else None
+        std_tau = float(np.std(tau_stars)) if tau_stars else None
 
         passed = mean_r >= r_floor
         boundary = passed and (mean_r - std_r < r_floor)
 
         fps_vals = [m.get('fps') for m in seeds if m.get('fps')]
-        fps = fps_vals[0] if fps_vals else None
+        fps = round(float(np.mean(fps_vals)), 1) if fps_vals else None
 
         size_vals = [m.get('size_mb') for m in seeds if m.get('size_mb')]
         flops_vals = [m.get('flops_g') for m in seeds if m.get('flops_g')]
+        param_vals = [m.get('params') for m in seeds if m.get('params')]
+
+        r25_vals = [m.get('recall_tau_025') for m in seeds if m.get('recall_tau_025') is not None]
+        min_r25_vals = [m.get('min_recall_tau_025') for m in seeds if m.get('min_recall_tau_025') is not None]
+        p25_vals = [m.get('precision_tau_025') for m in seeds if m.get('precision_tau_025') is not None]
+
+        r50_vals = [m.get('recall_tau_050') for m in seeds if m.get('recall_tau_050') is not None]
+        min_r50_vals = [m.get('min_recall_tau_050') for m in seeds if m.get('min_recall_tau_050') is not None]
+        p50_vals = [m.get('precision_tau_050') for m in seeds if m.get('precision_tau_050') is not None]
 
         configs.append({
             'pruning_ratio': pr,
             'quantization': q,
+            'mean_tau_star': mean_tau,
+            'std_tau_star': std_tau,
             'mean_min_recall': mean_r,
             'std_min_recall': std_r,
             'mean_precision': mean_p,
@@ -72,6 +86,17 @@ def aggregate(all_metrics, r_floor):
             'fps': fps,
             'size_mb': float(np.mean(size_vals)) if size_vals else None,
             'flops_g': float(np.mean(flops_vals)) if flops_vals else None,
+            'params': int(np.mean(param_vals)) if param_vals else None,
+            'mean_recall_tau_025': float(np.mean(r25_vals)) if r25_vals else None,
+            'std_recall_tau_025': float(np.std(r25_vals)) if r25_vals else None,
+            'mean_min_recall_tau_025': float(np.mean(min_r25_vals)) if min_r25_vals else None,
+            'std_min_recall_tau_025': float(np.std(min_r25_vals)) if min_r25_vals else None,
+            'mean_precision_tau_025': float(np.mean(p25_vals)) if p25_vals else None,
+            'mean_recall_tau_050': float(np.mean(r50_vals)) if r50_vals else None,
+            'std_recall_tau_050': float(np.std(r50_vals)) if r50_vals else None,
+            'mean_min_recall_tau_050': float(np.mean(min_r50_vals)) if min_r50_vals else None,
+            'std_min_recall_tau_050': float(np.std(min_r50_vals)) if min_r50_vals else None,
+            'mean_precision_tau_050': float(np.mean(p50_vals)) if p50_vals else None,
             'passed': passed,
             'boundary': boundary,
             'n_seeds': len(seeds),
