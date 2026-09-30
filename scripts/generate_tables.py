@@ -81,11 +81,11 @@ def find_config(agg_list, pruning_ratio, quant_level):
 
 def build_table1(data_by_model):
     lines = [
-        "### Table 1: Pruning sweep at FP32",
-        "Mean ± std over K seeds; **†** = boundary-close. Safety Recall is minimum per-class recall across safety classes.",
+        "### Table 1: Pruning sweep at FP32 (Fixed Thresholds τ=0.25 & τ=0.50)",
+        "Mean ± std over K seeds; Pass = Safety Recall @ τ=0.25 within 5% of uncompressed baseline ($R \\ge R_{\\text{base}} - 0.05$). **†** = boundary-close.",
         "",
-        "| Model | Pruning | mAP50 | mAP50:95 | Safety Recall @ τ* | Precision @ τ* | Size | FLOPs | FPS | Pass |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---|",
+        "| Model | Pruning | mAP50 | mAP50:95 | Safety Recall (τ=0.25) | Safety Recall (τ=0.50) | Precision (τ=0.25) | Size | FLOPs | FPS | Pass |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|",
     ]
     ratios = [0.0, 0.10, 0.20, 0.30, 0.40, 0.50]
     display_names = {'yolo11n': 'YOLO11n', 'yolo26n': 'YOLO26n'}
@@ -94,20 +94,31 @@ def build_table1(data_by_model):
         mname = display_names.get(m, m)
         d = data_by_model.get(m)
         agg = d['aggregated'] if d else []
+        base_c = find_config(agg, 0.0, 'fp32')
+        base_rec = base_c.get('mean_min_recall_tau_025', 0.85) if base_c else 0.85
+        floor_25 = base_rec - 0.05
+
         for r, label in zip(ratios, PRUNING_LABELS):
             c = find_config(agg, r, 'fp32')
             if c:
                 m50 = fmt_stat(c.get('mean_map50'), c.get('std_map50'))
                 m50_95 = fmt_stat(c.get('mean_map50_95'), c.get('std_map50_95'))
-                min_rec = fmt_stat(c.get('mean_min_recall'), c.get('std_min_recall'))
-                prec = fmt_stat(c.get('mean_precision'), c.get('std_precision'))
+                min_25 = fmt_stat(c.get('mean_min_recall_tau_025'), c.get('std_min_recall_tau_025'))
+                min_50 = fmt_stat(c.get('mean_min_recall_tau_050'), c.get('std_min_recall_tau_050'))
+                prec_25 = fmt_stat(c.get('mean_precision_tau_025'), None)
                 sz = f"{c.get('size_mb', 0):.1f} MB" if c.get('size_mb') else ""
                 flops = f"{c.get('flops_g', 0):.1f}G" if c.get('flops_g') else ""
                 fps = f"{c.get('fps', 0):.1f}" if c.get('fps') else ""
-                ps = fmt_pass(c.get('passed'), c.get('boundary'))
-                lines.append(f"| {mname} | {label} | {m50} | {m50_95} | {min_rec} | {prec} | {sz} | {flops} | {fps} | {ps} |")
+
+                cur_rec = c.get('mean_min_recall_tau_025', 0) or 0
+                cur_std = c.get('std_min_recall_tau_025', 0) or 0
+                passed = cur_rec >= floor_25
+                boundary = (cur_rec - cur_std) < floor_25 if passed else False
+                ps = fmt_pass(passed, boundary)
+
+                lines.append(f"| {mname} | {label} | {m50} | {m50_95} | {min_25} | {min_50} | {prec_25} | {sz} | {flops} | {fps} | {ps} |")
             else:
-                lines.append(f"| {mname} | {label} | | | | | | | | |")
+                lines.append(f"| {mname} | {label} | | | | | | | | | |")
     return "\n".join(lines)
 
 
