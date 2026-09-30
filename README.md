@@ -17,6 +17,11 @@ $$
 $$
 Threshold $\tau$ is re-tuned per seed; the score distribution shifts with the trained weights, not just with $(r, q)$. Here $R_{\text{floor}}^{(k)} = R_{\text{base}}^{(k)} - \delta$.
 
+**Uncompensated vs. Compensated Evaluation Rationale ($\tau=0.25$ vs. $\tau^*$).**
+While adaptive threshold tuning ($\tau^*$) represents a production strategy to guarantee recall, it introduces an evaluation confound: lowering $\tau^*$ artificially recovers recall while hiding structural degradation behind a steep drop in precision (false alarms). To address this, we evaluate both:
+1. **Uncompensated Baseline ($\tau=0.25$, standard YOLO default; $\tau=0.50$, high-certainty):** Freezes the operating point to measure the intrinsic, unadulterated capacity loss of the pruned network.
+2. **Compensated Adaptation ($\tau^*$):** Quantifies whether the safety floor can be reclaimed and measures the exact "Precision Tax" incurred.
+
 **Pass criterion.** Each config is trained with $K = 3$ seeds. Pass iff:
 $$
 \frac{1}{K}\sum_{k=1}^{K} \min_{c \in \mathcal{C}_{\text{safety}}} \text{Recall}_c\big(\tau^{*(k)}\big) \ge R_{\text{floor}}
@@ -202,6 +207,11 @@ Comparison of uncompensated macro and minimum safety recall at fixed confidence 
 | YOLO26n | 3R% | 0.934 ± 0.017 | 0.888 ± 0.006 | 0.874 ± 0.020 | 0.773 ± 0.047 | 0.824 ± 0.013 | 0.673 ± 0.050 | -3.92% |
 | YOLO26n | 4R% | 0.949 ± 0.016 | 0.887 ± 0.006 | 0.894 ± 0.013 | 0.825 ± 0.026 | 0.840 ± 0.035 | 0.720 ± 0.049 | -1.84% |
 | YOLO26n | 5R% | 0.949 ± 0.004 | 0.888 ± 0.007 | 0.908 ± 0.018 | 0.836 ± 0.011 | 0.838 ± 0.017 | 0.728 ± 0.035 | -0.53% |
+
+**Key Analytical Insights on Fixed Thresholds vs. Adaptive τ\*:**
+- **The Masking Effect of τ\*:** At adaptive τ*, Recall appears invariant (~0.93–0.96) because the optimizer automatically lowers the threshold from 0.11 down to 0.007 to satisfy the safety floor constraint. However, this recovery comes at a direct 13.5–15.3% penalty in Precision (nuisance false alarms).
+- **True Structural Degradation (Fixed τ=0.25 / 0.50):** Evaluating at fixed operational thresholds exposes the real capacity loss: YOLO26n suffers up to a 3.92% macro recall drop at τ=0.25 and an 8.7% worst-case safety recall drop at τ=0.50.
+- **Winning Deployment Recommendation:** Under the strict constraint of minimal memory footprint within a 5% recall degradation ceiling, **YOLO11n at 50% pruning (FP32)** is the optimal model: it slashes memory by 48% (to 2.7 MB) with only a 1.99% raw recall drop, whereas aggressive INT8 quantization (1.6 MB) crosses the safety boundary.
 
 
 ## Repo Layout

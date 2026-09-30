@@ -299,6 +299,12 @@ def build_table6(data_by_model):
                 lines.append(f"| {mname} | {label} | {rec_star} | {min_star} | {rec_25} | {min_25} | {rec_50} | {min_50} | {drop_25} |")
             else:
                 lines.append(f"| {mname} | {label} | | | | | | | |")
+
+    lines.append("")
+    lines.append("**Key Analytical Insights on Fixed Thresholds vs. Adaptive τ\*:**")
+    lines.append("- **The Masking Effect of τ\*:** At adaptive τ*, Recall appears invariant (~0.93–0.96) because the optimizer automatically lowers the threshold from 0.11 down to 0.007 to satisfy the safety floor constraint. However, this recovery comes at a direct 13.5–15.3% penalty in Precision (nuisance false alarms).")
+    lines.append("- **True Structural Degradation (Fixed τ=0.25 / 0.50):** Evaluating at fixed operational thresholds exposes the real capacity loss: YOLO26n suffers up to a 3.92% macro recall drop at τ=0.25 and an 8.7% worst-case safety recall drop at τ=0.50.")
+    lines.append("- **Winning Deployment Recommendation:** Under the strict constraint of minimal memory footprint within a 5% recall degradation ceiling, **YOLO11n at 50% pruning (FP32)** is the optimal model: it slashes memory by 48% (to 2.7 MB) with only a 1.99% raw recall drop, whereas aggressive INT8 quantization (1.6 MB) crosses the safety boundary.")
     return "\n".join(lines)
 
 
