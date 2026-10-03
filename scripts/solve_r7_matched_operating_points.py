@@ -14,7 +14,8 @@ def compute_ap(recalls, precisions):
     for i in range(len(mpre) - 1, 0, -1):
         mpre[i - 1] = max(mpre[i - 1], mpre[i])
     x = np.linspace(0, 1, 101)
-    return np.trapz(np.interp(x, mrec, mpre), x)
+    y = np.interp(x, mrec, mpre)
+    return np.trapezoid(y, x) if hasattr(np, 'trapezoid') else np.trapz(y, x)
 
 def eval_matched_metrics(df_dets, split_gt, n_images):
     # df_dets has cols: class_id, conf, matched, video, frame
