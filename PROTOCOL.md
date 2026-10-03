@@ -1,7 +1,7 @@
 # PROTOCOL.md: Experimental Protocol Specification
-**Status:** DRAFT — not yet committed as final (pending Phase 0 review and user approval)
+**Status:** FINAL — Approved and frozen for execution.
 **Repository:** `IamOumarIbrahim/pruning-missed-detection`
-**Target Commit Hash:** [To be recorded upon formal freezing before any Phase 1 execution]
+**Frozen Commit Hash:** `b31aa85` (Phase 0 Audit Deliverable)
 
 ---
 
