@@ -1,0 +1,19 @@
+event_id,subject,video,frames,max_conf,det_25,det_star,num_frames,frames_at_star
+evt_0010,subject_05,video_04,[53..55] (3 fr),0.75894,True,True,3,1
+evt_0011,subject_05,video_04,[118..121] (4 fr),0.79953,True,True,4,3
+evt_0012,subject_05,video_04,[137..137] (1 fr),0.68178,True,False,1,0
+evt_0017,subject_10,video_01,[82..82] (1 fr),0.16998,False,False,1,0
+evt_0029,subject_12,video_01,[39..40] (2 fr),0.73076,True,False,2,0
+evt_0030,subject_12,video_01,[101..101] (1 fr),0.49897,True,False,1,0
+evt_0031,subject_12,video_01,[109..110] (2 fr),0.75348,True,False,2,0
+evt_0032,subject_12,video_01,[126..126] (1 fr),0.75736,True,True,1,1
+evt_0033,subject_12,video_01,[151..154] (4 fr),0.7534,True,False,4,0
+evt_0034,subject_12,video_01,[181..181] (1 fr),0.34296,True,False,1,0
+evt_0035,subject_12,video_01,[248..248] (1 fr),0.23279,False,False,1,0
+evt_0044,subject_12,video_02,[8..9] (2 fr),0.75145,True,False,2,0
+evt_0045,subject_12,video_02,[114..114] (1 fr),0.00198,False,False,1,0
+evt_0046,subject_12,video_02,[144..144] (1 fr),0.75134,True,False,1,0
+evt_0047,subject_12,video_02,[193..194] (2 fr),0.76837,True,True,2,1
+evt_0054,subject_12,video_04,[46..48] (3 fr),0.77752,True,True,3,1
+evt_0055,subject_12,video_04,[85..85] (1 fr),0.49261,True,False,1,0
+evt_0056,subject_12,video_04,[125..126] (2 fr),0.79871,True,True,2,2
