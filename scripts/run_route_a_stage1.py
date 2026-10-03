@@ -62,11 +62,10 @@ def compute_ap(recalls, precisions):
         mpre[i - 1] = max(mpre[i - 1], mpre[i])
     x = np.linspace(0, 1, 101)
     y = np.interp(x, mrec, mpre)
-    return np.trapezoid(y, x) if hasattr(np, 'trapezoid') else np.trapz(y, x)
+    return float(np.trapezoid(y, x) if hasattr(np, 'trapezoid') else np.trapz(y, x))
 
 def eval_metrics_from_preds(preds, split_name):
     split_gt = DF_GT[DF_GT['split'] == split_name]
-    n_images = split_gt['image_id'].nunique()
     gt_by_img = {}
     for img_id, grp in split_gt.groupby('image_id'):
         gt_by_img[img_id] = grp[['class_id', 'x1', 'y1', 'x2', 'y2']].to_dict('records')
@@ -76,7 +75,10 @@ def eval_metrics_from_preds(preds, split_name):
         preds_by_img.setdefault(p['image_id'], []).append(p)
 
     matched_records = []
-    for img_id, p_list in preds_by_img.items():
+    all_imgs = set(preds_by_img.keys()).union(set(gt_by_img.keys()))
+
+    for img_id in all_imgs:
+        p_list = preds_by_img.get(img_id, [])
         p_list_sorted = sorted(p_list, key=lambda x: x['score'], reverse=True)
         img_gts = gt_by_img.get(img_id, [])
         matched_gt = set()
@@ -134,6 +136,7 @@ def eval_metrics_from_preds(preds, split_name):
         'mAP50': float(np.mean(ap50_list)),
         'min_class_AP50': float(np.min(ap50_list)),
         'worst_class_rec_p80': float(np.min(rec_p80_list)),
+        'per_class_AP50': ap50_list,
         'per_class_rec_p80': rec_p80_list
     }
 
@@ -142,9 +145,8 @@ def run_stage1_screening():
     log("ROUTE A STAGE 1: SEQUENTIAL SCREENING (60% to 90%, Seed 0)")
     log("=" * 80)
 
-    # Load baseline reference metrics for Seed 0
-    with open(REPO_ROOT / 'results' / 'calibrated_eval_data.json') as f:
-        calib_data = json.load(f)
+    # Reference metrics for Seed 0 from Phase 0 R7 audit table
+    df_r7 = pd.read_csv(REPO_ROOT / 'results' / 'phase0' / 'r7_matched_operating_points.csv')
 
     stage1_records = []
     if RESULTS_CSV.exists():
@@ -157,17 +159,26 @@ def run_stage1_screening():
         log(f"STAGE 1 SCREENING FOR ARCHITECTURE: {model_name}")
         log(f"=======================================================")
 
-        base_rec = calib_data[model_name]['0%']['0']
-        base_map50 = base_rec['test_mAP50']
-        base_min_ap50 = base_rec['test_min_ap50']
-        log(f"Baseline Seed 0 reference: mAP50 = {base_map50:.4f}, min-class AP50 = {base_min_ap50:.4f}")
+        r7_base = df_r7[(df_r7['model'] == model_name) & (df_r7['prune_ratio'] == '0%') & (df_r7['seed'] == 0)].iloc[0]
+        base_map50 = float(r7_base['test_mAP50'])
+        base_min_ap50 = float(r7_base['test_min_AP50'])
+        base_worst_rec_p80 = float(r7_base['test_worst_rec_p80'])
+        log(f"Baseline Seed 0 reference: mAP50 = {base_map50:.4f}, min-class AP50 = {base_min_ap50:.4f}, worst Rec@P80 = {base_worst_rec_p80:.4f}")
 
+        # Baseline weights check
         base_weights = REPO_ROOT / 'models' / model_name / 'baseline' / 'seed_0' / 'weights' / 'best.pt'
         if not base_weights.exists():
             log(f"ERROR: Baseline weights not found at {base_weights}")
             continue
 
-        prev_ratio_worst_recall = None
+        # Starting reference for knee slope check (starts at 50% ratio if available, otherwise baseline)
+        r7_50 = df_r7[(df_r7['model'] == model_name) & (df_r7['prune_ratio'] == '50%') & (df_r7['seed'] == 0)]
+        if len(r7_50) > 0:
+            prev_ratio_worst_recall = float(r7_50.iloc[0]['test_worst_rec_p80'])
+            log(f"Starting knee reference from 50% pruning: worst Rec@P80 = {prev_ratio_worst_recall:.4f}")
+        else:
+            prev_ratio_worst_recall = base_worst_rec_p80
+            log(f"Starting knee reference from 0% baseline: worst Rec@P80 = {prev_ratio_worst_recall:.4f}")
 
         for ratio in STAGE1_RATIOS:
             ratio_pct = int(ratio * 100)
@@ -175,6 +186,10 @@ def run_stage1_screening():
 
             if key in completed_keys:
                 log(f"Run {key} already completed in results CSV. Skipping.")
+                # Update previous ratio recall for continuity
+                existing_match = [r for r in stage1_records if r['model'] == model_name and int(r['prune_ratio']*100) == ratio_pct]
+                if existing_match:
+                    prev_ratio_worst_recall = existing_match[0]['worst_class_rec_p80']
                 continue
 
             target_dir = REPO_ROOT / 'models' / model_name / 'pruning_fp32' / f'{ratio_pct}pct' / 'seed_0'
@@ -193,31 +208,64 @@ def run_stage1_screening():
                 log(f"Starting pruning and 100-epoch fine-tuning for {key}...")
                 train_start = time.time()
                 try:
-                    # Prune baseline model
-                    pruned_model = prune_model(str(base_weights), pruning_ratio=ratio)
-                    pruned_init_path = target_dir / 'weights' / 'pruned_init.pt'
-                    pruned_init_path.parent.mkdir(parents=True, exist_ok=True)
-                    torch.save(pruned_model, str(pruned_init_path))
+                    # Prune baseline model checkpoint
+                    pruned_dir = REPO_ROOT / 'models' / model_name / 'pruned' / f'{ratio_pct}pct'
+                    pruned_path = pruned_dir / 'seed_0_pruned.pt'
+                    pruned_path.parent.mkdir(parents=True, exist_ok=True)
+                    if not (pruned_path.exists() and pruned_path.stat().st_size > 100_000):
+                        log(f"Pruning {model_name} at {ratio:.0%} from {base_weights}...")
+                        prune_model(str(base_weights), ratio, str(pruned_path), imgsz=640)
+                        info = get_model_info(str(pruned_path))
+                        log(f"Pruned checkpoint created: params={info['num_params']:,}, flops={info['flops_g']}G, size={info['size_mb']:.2f}MB")
 
-                    # Train
-                    trainer = PrunedDetectionTrainer(overrides={
-                        'model': str(pruned_init_path),
-                        'data': DATA_YAML,
-                        'epochs': 100,
-                        'batch': 16,
-                        'imgsz': 640,
-                        'device': 0,
-                        'workers': 8,
-                        'patience': 0,
-                        'amp': True,
-                        'project': str(target_dir.parent),
-                        'name': target_dir.name,
-                        'exist_ok': True,
-                        'verbose': False
-                    })
-                    trainer.train()
+                    # Fine-tune using Ultralytics with PrunedDetectionTrainer
+                    log(f"Fine-tuning {model_name} {ratio_pct}pct (seed 0) for 100 epochs...")
+                    ft_model = YOLO(str(pruned_path))
+                    train_results = ft_model.train(
+                        trainer=PrunedDetectionTrainer,
+                        data=DATA_YAML,
+                        epochs=100,
+                        batch=16,
+                        imgsz=640,
+                        patience=0,
+                        amp=True,
+                        seed=0,
+                        project=str(REPO_ROOT / 'models' / model_name / 'pruning_fp32' / f'{ratio_pct}pct'),
+                        name='seed_0',
+                        exist_ok=True,
+                        device=0,
+                        workers=8,
+                        cache=False,
+                        verbose=False
+                    )
+
+                    # Locate trained best.pt weights
+                    candidates = [
+                        target_pt,
+                        target_dir / 'weights' / 'last.pt',
+                    ]
+                    if hasattr(ft_model, 'trainer') and ft_model.trainer and hasattr(ft_model.trainer, 'save_dir'):
+                        s_dir = Path(ft_model.trainer.save_dir) / 'weights'
+                        candidates.extend([s_dir / 'best.pt', s_dir / 'last.pt'])
+                    if hasattr(train_results, 'save_dir'):
+                        r_dir = Path(train_results.save_dir) / 'weights'
+                        candidates.extend([r_dir / 'best.pt', r_dir / 'last.pt'])
+                    runs_dir = REPO_ROOT / 'runs' / 'detect' / 'models' / model_name / 'pruning_fp32' / f'{ratio_pct}pct' / 'seed_0' / 'weights'
+                    candidates.extend([runs_dir / 'best.pt', runs_dir / 'last.pt'])
+
+                    saved = False
+                    for c in candidates:
+                        if c and Path(c).exists() and Path(c).stat().st_size > 1_000_000:
+                            target_pt.parent.mkdir(parents=True, exist_ok=True)
+                            if Path(c).resolve() != target_pt.resolve():
+                                shutil.copy2(c, target_pt)
+                            saved = True
+                            break
+                    if not saved:
+                        raise RuntimeError(f"Failed to find valid weights for {key}")
+
                     train_duration = time.time() - train_start
-                    log(f"Training completed in {train_duration/3600:.2f} hours.")
+                    log(f"Training completed successfully in {train_duration/3600:.2f} hours. Saved to {target_pt}")
                 except Exception as e:
                     log(f"CRITICAL: Training failed for {key}: {str(e)}")
                     log(f"Early Stopping Rule Triggered for {model_name} at {ratio_pct}%. Halting further pruning for this architecture.")
@@ -232,7 +280,11 @@ def run_stage1_screening():
                 conf=0.001, iou=0.7, max_det=300, save_json=True, plots=False, verbose=False,
                 project=str(out_eval.parent), name=out_eval.name, exist_ok=True
             )
-            with open(out_eval / 'predictions.json') as f:
+            pred_file = out_eval / 'predictions.json'
+            if not pred_file.exists() and hasattr(res, 'save_dir'):
+                pred_file = Path(res.save_dir) / 'predictions.json'
+
+            with open(pred_file) as f:
                 preds = json.load(f)
 
             metrics = eval_metrics_from_preds(preds, 'test')
@@ -242,8 +294,9 @@ def run_stage1_screening():
 
             delta_mAP50 = (mAP50 - base_map50) * 100
             delta_min_AP50 = (min_AP50 - base_min_ap50) * 100
+            delta_worst_rec = (worst_rec_p80 - base_worst_rec_p80) * 100
 
-            # 3. Check Stopping Rule
+            # 3. Check Stopping Rule: Delta mAP50 < -30 pp (complete collapse)
             if delta_mAP50 < -30.0:
                 log(f"Model collapse detected: mAP50 dropped by {delta_mAP50:.2f} pp (> 30 pp).")
                 log(f"Early Stopping Rule Triggered for {model_name}. Higher ratios will not be executed.")
@@ -253,16 +306,13 @@ def run_stage1_screening():
 
             # 4. Check Flagging Criteria
             # Concealment: mAP50 stable (delta >= -3.0 pp) while worst recall dropped <= -7.5 pp
-            # Knee: slope drop <= -10.0 pp
-            flag_concealment = (delta_mAP50 >= -3.0) and (delta_min_AP50 <= -7.5)
-            flag_knee = False
-            if prev_ratio_worst_recall is not None:
-                step_drop = (worst_rec_p80 - prev_ratio_worst_recall) * 100
-                if step_drop <= -10.0:
-                    flag_knee = True
+            # Knee: slope drop <= -10.0 pp relative to preceding ratio
+            flag_concealment = bool((delta_mAP50 >= -3.0) and (delta_worst_rec <= -7.5))
+            step_drop = (worst_rec_p80 - prev_ratio_worst_recall) * 100
+            flag_knee = bool(step_drop <= -10.0)
             prev_ratio_worst_recall = worst_rec_p80
 
-            flagged_for_stage2 = flag_concealment or flag_knee
+            flagged_for_stage2 = bool(flag_concealment or flag_knee)
 
             record = {
                 'model': model_name,
@@ -273,6 +323,8 @@ def run_stage1_screening():
                 'worst_class_rec_p80': worst_rec_p80,
                 'delta_mAP50_pp': delta_mAP50,
                 'delta_min_AP50_pp': delta_min_AP50,
+                'delta_worst_rec_pp': delta_worst_rec,
+                'step_drop_worst_rec_pp': step_drop,
                 'flag_concealment': flag_concealment,
                 'flag_knee': flag_knee,
                 'flagged_for_stage2': flagged_for_stage2,
@@ -280,13 +332,17 @@ def run_stage1_screening():
             }
             stage1_records.append(record)
             pd.DataFrame(stage1_records).to_csv(RESULTS_CSV, index=False)
-            log(f"Result for {key}: mAP50={mAP50:.4f} (Δ={delta_mAP50:+.2f} pp), min-AP50={min_AP50:.4f} (Δ={delta_min_AP50:+.2f} pp), Flagged={flagged_for_stage2}")
+            log(f"Result for {key}: mAP50={mAP50:.4f} (Δ={delta_mAP50:+.2f} pp), min-AP50={min_AP50:.4f} (Δ={delta_min_AP50:+.2f} pp), worst Rec@P80={worst_rec_p80:.4f} (Δ={delta_worst_rec:+.2f} pp, step={step_drop:+.2f} pp), Flagged={flagged_for_stage2}")
 
             if stopping_triggered:
                 break
 
     log("\nRoute A Stage 1 Screening Completed!")
     log(f"Results saved to: {RESULTS_CSV}")
+    update_status({
+        'status': 'idle',
+        'stage': 'Stage 1 Completed'
+    })
 
 if __name__ == '__main__':
     run_stage1_screening()
