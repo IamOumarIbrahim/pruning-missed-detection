@@ -1,6 +1,6 @@
 """Out-of-sample validation-calibrated evaluation sweep.
 
-Strictly follows pre-registered protocol:
+Follows out-of-sample calibration protocol:
 1. R_base is computed on the validation split ('val') at canonical default tau = 0.25.
 2. R_floor = R_base_val - 0.05.
 3. tau* is selected strictly on the validation split:

@@ -1,0 +1,12 @@
+checkpoint_id,model,prune_ratio,seed,ckpt_type,split,tag,parquet_path,sha256,num_detections,num_tp,created_at
+yolo11n_baseline_s0_best,yolo11n,0%,0,best,val,eval,results\phase0\cache\yolo11n_baseline_s0_best_val.parquet,11fadbb5f060f9c015baeffc60bfd0a9d75ff5f51854e03cf4964ee17a736178,1535,633,2026-10-04T01:02:59.129377
+yolo11n_baseline_s0_best,yolo11n,0%,0,best,test,eval,results\phase0\cache\yolo11n_baseline_s0_best_test.parquet,be6629bb2260669e56ee74509dbf4e066560b8bbee0d8c376b94cd55f7f181e5,1751,598,2026-10-04T01:03:33.006632
+yolo11n_baseline_s0_best,yolo11n,0%,0,best,train,train-fit,results\phase0\cache\yolo11n_baseline_s0_best_train.parquet,a70d00142e3ccb0b105b9fc6482bbf3e238dd5b24af1816bcd9aada66af7e684,3416,1747,2026-10-04T01:06:01.589833
+yolo11n_baseline_s1_best,yolo11n,0%,1,best,val,eval,results\phase0\cache\yolo11n_baseline_s1_best_val.parquet,cd46abf95b6824273da8ca0dcff28303452096e5949cd4e610c5579c98943a31,1370,629,2026-10-04T01:06:52.014098
+yolo11n_baseline_s1_best,yolo11n,0%,1,best,test,eval,results\phase0\cache\yolo11n_baseline_s1_best_test.parquet,4c85e3e88cfdb14386fd13e7416f92ad89a872b31b02a4df173fe8b41dbbd327,1219,592,2026-10-04T01:07:42.885106
+yolo11n_baseline_s1_best,yolo11n,0%,1,best,train,train-fit,results\phase0\cache\yolo11n_baseline_s1_best_train.parquet,7ea35fca305962d19874c881cd9c2a49331eaa37d051df6f3202222712ec7d5f,2532,1748,2026-10-04T01:09:49.952146
+yolo11n_baseline_s2_best,yolo11n,0%,2,best,val,eval,results\phase0\cache\yolo11n_baseline_s2_best_val.parquet,f9bfa5d9f86ca3f3f7a59accea062a0bdf17e3f906e735853f73b52c32b0784a,955,626,2026-10-04T01:10:24.461603
+yolo11n_baseline_s2_best,yolo11n,0%,2,best,test,eval,results\phase0\cache\yolo11n_baseline_s2_best_test.parquet,dc132459777cce785d7a0747988dc0d5bb7908995633564c940af64c574ff351,1142,587,2026-10-04T01:10:56.384500
+yolo11n_baseline_s2_best,yolo11n,0%,2,best,train,train-fit,results\phase0\cache\yolo11n_baseline_s2_best_train.parquet,eec765262f17aa814afc198f4237b19f862d845b057a782eba14fe630a263f2d,2326,1748,2026-10-04T01:12:27.205334
+yolo11n_10pct_s0_best,yolo11n,10%,0,best,val,eval,results\phase0\cache\yolo11n_10pct_s0_best_val.parquet,a5e3fe39e731ebc9f8e1334bfb19028d21ede00ce1e15abd14a1ec8ab893186f,1162,623,2026-10-04T01:14:15.932235
+yolo11n_10pct_s0_best,yolo11n,10%,0,best,test,eval,results\phase0\cache\yolo11n_10pct_s0_best_test.parquet,63af27a97ca95bfb694e3665c16531bb5b6de2abb1eaef9d3ba785489554b9e0,1063,566,2026-10-04T01:14:47.581046

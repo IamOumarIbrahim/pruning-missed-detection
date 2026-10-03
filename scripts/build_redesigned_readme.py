@@ -1,4 +1,4 @@
-"""Build comprehensive redesigned README.md with pre-registered protocol, out-of-sample calibration, and threshold-free AP50."""
+"""Build comprehensive redesigned README.md with out-of-sample calibration protocol and threshold-free AP50."""
 
 import json
 from pathlib import Path
@@ -34,13 +34,13 @@ ratios = ['0%', '10%', '20%', '30%', '40%', '50%']
 display = {'yolo11n': 'YOLO11n', 'yolo26n': 'YOLO26n'}
 
 lines = [
-    "# Pre-Registered Safety Evaluation of Pruning and Quantization for Driver Monitoring",
+    "# Safety Evaluation of Pruning and Quantization for Driver Monitoring",
     "",
     "## 1. Experimental Framework & Core Hypotheses",
     "",
     "Deploying lightweight object detection models for in-cabin driver safety (monitoring `phone_use`, `drinking`, `yawning`, and `hand_over_mouth`) demands strict worst-case safety guarantees under real-time compute constraints.",
     "",
-    "### Pre-Registered Hypotheses",
+    "### Core Hypotheses",
     "- **$H_1$ (Calibration Shift vs. Representation Collapse):** Structured channel pruning up to 50% preserves class ranking (per-class AP50 remains stable within ±2 pp), but shifts confidence score calibration on rare tail classes, creating artificial recall degradation under rigid, uncalibrated operational thresholds ($\\tau = 0.50$).",
     "- **$H_2$ (Out-of-Sample Guardrail Fragility):** Adaptive threshold guardrails ($\\tau^*$) tuned on a disjoint validation split fail to maintain regulatory safety floors ($R_{\\text{floor}}$) out-of-sample on unseen test subjects due to inter-subject score calibration drift.",
     "- **$H_3$ (Standard mAP Limitations):** Standard integrated benchmark mAP50 fails to reflect tail-class vulnerability because frequent classes (`phone_use` at 81%) dominate the metric.",
@@ -207,7 +207,7 @@ lines.extend([
     "# 1. Run out-of-sample validation-calibrated sweep",
     "python scripts/eval_val_calibrated_sweep.py",
     "",
-    "# 2. Re-generate pristine pre-registered README tables",
+    "# 2. Re-generate reproducible README tables",
     "python scripts/build_redesigned_readme.py",
     "```",
     ""
