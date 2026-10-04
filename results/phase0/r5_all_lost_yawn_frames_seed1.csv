@@ -1,4 +1,4 @@
-subject,video,frame,frame_num,event_id,best_conf,best_iou
+subject,video,image_id,frame_num,event_id,best_conf,best_iou
 subject_12,video_01,subject_12_video_01_frame_0110,110,evt_0031,0.75348,0.8415039144904723
 subject_12,video_01,subject_12_video_01_frame_0152,152,evt_0033,0.7534,0.830144166462847
 subject_12,video_02,subject_12_video_02_frame_0008,8,evt_0044,0.75145,0.854384448405872

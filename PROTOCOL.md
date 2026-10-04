@@ -6,108 +6,103 @@
 
 ## 1. Experimental Overview & Pre-Conditions
 
-This protocol establishes the prospective execution rules for investigating whether structured channel pruning in lightweight edge object detectors causes catastrophic tail-class safety recall degradation that is obscured by standard aggregate benchmark metrics ($\text{mAP}_{50}$).
+This protocol establishes prospective execution rules for investigating whether structured channel pruning in lightweight edge object detectors causes catastrophic tail-class safety recall degradation that is obscured by standard aggregate benchmark metrics ($\text{mAP}_{50}$).
 
 ### 1.1 Strict Ground Rules
 1. **Execution Freeze:** No GPU fine-tuning, training, model downloading, or dataset restructuring shall occur until this protocol is finalized, approved by the user with an explicit chat message beginning "APPROVED:", and committed. UI clicks, tool approvals, or automated approvals are void.
-2. **Spent Test Split Status:** The local test partition (`subject_05`, `subject_10`, `subject_12`) has been used for exploratory threshold sweeps during preliminary audits. Under this protocol, all evaluations on this split are designated as **exploratory**. Confirmatory claims require unseen subjects (Route B) or strict out-of-sample cross-validation.
-3. **Statistical Integrity:** No single-seed claims or uncorrected $t$/Welch statistics shall be reported for small sample sizes. All evaluation uncertainty intervals must use **video-cluster bootstrap** (and subject-cluster bootstrap where applicable) conditioning on the trained checkpoints.
+2. **Spent Test Split Status:** The local test partition (`subject_05`, `subject_10`, `subject_12`) has been used for exploratory threshold sweeps during preliminary audits. Under this protocol, all evaluations on this split are permanently designated as **exploratory**. Confirmatory claims require unseen subjects or prospective cross-validation (Route RESTART).
+3. **Statistical Integrity:** No single-seed claims or uncorrected $t$/Welch statistics shall be reported for small sample sizes ($n=3$). All evaluation uncertainty intervals must use **video-cluster bootstrap** (and subject-cluster bootstrap where applicable) conditioning on the trained checkpoints.
 4. **Canonical Metric Standard:** All threshold-dependent recalls must use the exact canonical step function from cached detections ($\text{matched GT at conf} \ge \tau / \text{GT}$). Linear interpolation (`r_curve`, `np.interp`) and max-$F_1$ heuristics (`box.r`) are prohibited.
+5. **Rewritten Core Thesis:**
+   > *"Lightweight driver-monitoring object detectors exhibit severe out-of-sample safety guardrail failure on rare tail behaviors under validation-tuned confidence thresholds—not primarily from structured pruning representation collapse up to 50% sparsity, but from winner's-curse boundary selection and extreme inter-subject event sparsity that undermine single-threshold transfer."*
 
 ---
 
-## 2. Route A: Extended Pruning Dose-Response (60% to 90%)
+## 2. Reviewer Comment -> Status -> Evidence Mapping
 
-Route A tests the hypothesis that pushing structured pruning beyond 50% into extreme regimes (60%, 70%, 80%, 90%) reveals the "knee" where worst-class safety recall collapses while aggregate $\text{mAP}_{50}$ remains comparatively stable.
-
-### 2.1 Stage 1: Sequential Screening
-To minimize wasted GPU compute, Stage 1 evaluates a single seed ($s=0$) sequentially across extreme pruning ratios:
-$$\text{Ratio Grid: } r \in \{60\%, 70\%, 80\%, 90\%\} \quad \text{for } M \in \{\text{YOLO11n}, \text{YOLO26n}\}$$
-
-- **Execution Order:** Train sequentially $60\% \to 70\% \to 80\% \to 90\%$.
-- **Early Stopping Rule (Empirically Derived):** If fine-tuning at ratio $r$ fails (loss divergence / NaN / infinite loss), or if all-class $\text{mAP}_{50}$ drops by more than $30.0\text{ pp}$ relative to baseline (complete model collapse, matching the evaluation MDE of $30.02\text{ pp}$), training halts for that architecture, and higher ratios for that model are not executed.
-- **Reporting Commitment:** The full dose-response curve (0% to the stopping point) will be reported in full, regardless of whether the hypothesis is supported or refuted.
-
-### 2.2 Stage 1 Screening Criteria (Data-Derived from Step 2 Audit)
-Screening criteria are derived from verified baseline seed variance ($K=5$ YOLO11n seed SD $= 3.01\text{ pp}$ at fixed $\tau=0.25$; $\text{Rec}_{P80}\text{ SD} = 1.86\text{ pp}$) and nested bootstrap evaluation uncertainty ($\text{SE} = 10.72\text{ pp}$, $\text{MDE} = 30.02\text{ pp}$):
-- **Flagging Criteria for Stage 2 Seed Expansion:**
-  A ratio $r$ is flagged for multi-seed expansion ($s \in \{1, 2, 3, 4\}$) if either:
-  1. **Concealment Pattern:** Aggregate $\Delta \text{mAP}_{50} \ge -3.0\text{ pp}$ (aggregate metric stable), while worst-class threshold-free recall drops by $\Delta \text{Rec}_{P80} \le -10.0\text{ pp}$ (exceeding $3 \times \text{baseline seed SD}$).
-  2. **Safety Knee:** $\text{Rec}_{P80}(r) - \text{Rec}_{P80}(r - 10\%) \le -15.0\text{ pp}$ (slope discontinuity exceeding half of the evaluation MDE).
-
-### 2.3 Stage 2: Confirmatory Seed Expansion
-- For any ratio $r$ meeting the Stage 1 flagging criteria, expand to $K=5$ seeds ($s \in \{0, 1, 2, 3, 4\}$) using identical hyperparameter seeds.
-- If no ratio meets the flagging criteria, report the full descriptive dose-response curve as an empirical null result on concealment.
-
-### 2.4 Primary Endpoints for Route A
-1. **Primary Endpoint:** Worst-Class Recall at Matched Precision = 0.80 ($\text{Rec}_{P80}$), isolating representation capacity from score calibration.
-2. **Secondary Endpoint:** Worst-Class Recall at Matched Precision = 0.90 ($\text{Rec}_{P90}$).
-3. **Threshold-Free Ranking:** Min-Class $\text{AP}_{50}$ and Macro $\text{mAP}_{50}$.
-4. **Calibration Drift Metrics:** Median TP confidence, 10th percentile TP confidence, and $\tau_{80}$ per class.
-5. **Infeasible-Floor Handling:** If a pruned model cannot achieve $\text{Recall}_c \ge R_{\text{floor}}$ at any $\tau \ge 0.01$, record explicitly as `Feasible = False`, `tau_star = None`, rather than clamping to 0.01.
+| Reviewer Comment / Hypothesis | Current Status | Primary Empirical Evidence | Remaining Confounders / Caveats |
+|:---|:---|:---|:---|
+| **R1: "Pruning selectively destroys tail-class representation (concealment)"** | **UNDERPOWERED** | Dose-response 0%–50% shows paired $\Delta \text{min-AP}_{50}$ mean of $-0.26\text{ pp}$ (YOLO11n) and $-1.08\text{ pp}$ (YOLO26n), well within baseline seed SD ($2.19\text{ pp}$). ANOVA $\eta^2$ ($33\%, 25\%$) does not exceed null sampling noise ($26.3\%, 29.4\%$). | Regimes $\ge 60\%$ unmeasured. Sample size $n=3$ seeds has evaluation MDE $= 14.53\text{ pp}$. |
+| **R2: "Validation-tuned threshold $\tau^*$ fails out-of-sample"** | **SUPPORTED** | Across 8 complete baselines, $\tau^*$ passes only 2/8 (25%) on `best.pt` and 0/8 (0%) on `last.pt`, with mean margin $-16.49\text{ pp}$. In contrast, deployment default $\tau=0.25$ passes 8/8 (100%) on `best.pt` and 6/8 (75%) on `last.pt`. | Winner's-curse boundary selection vs val-to-test confidence shift are NOT separated due to floor anchoring at $R_{\text{base}} - 5\text{ pp}$. |
+| **R3: "Inter-subject confidence shift breaks calibration"** | **UNDERPOWERED** | Minimum 2-sided permutation $p$-value for $3+3$ subjects is $2/\binom{6}{3} = 0.10$. Confidence quantiles overlap baseline seed variance. | Confounded with event-level noise (val floor set by 7 `hand_over_mouth` events; test tail dominated by `subject_12`). |
+| **R4: "Aggregate mAP conceals worst-class safety degradation"** | **UNDERPOWERED** | Min-class AP50 tracks mAP50 within $\pm 1.5\text{ pp}$ across 0%–50% ratios. At $\tau=0.25$, worst-class recall tracks baseline within $\pm 2.6\text{ pp}$. | Concealment may emerge at extreme ratios ($>50\%$) where capacity is exhausted. |
+| **R5: "Checkpoint selection (`best.pt` vs `last.pt`) drives compliance"** | **SUPPORTED** | Switching `best.pt` to `last.pt` reduces $\tau^*$ compliance from 2/8 to 0/8, shifting mean test margin from $-16.49\text{ pp}$ to $-19.18\text{ pp}$. | Baseline sample size $n=2$ models $\times$ seeds; primarily reflects validation overfitting of `best.pt`. |
 
 ---
 
-## 3. Route B: Confirmatory Safety Guardrail Protocol
+## 3. Prospective Route Specifications
 
-Route B rigorously evaluates operational safety guardrails ($\tau^*$ selection and fixed operating points) under strict out-of-sample validation to prevent winner's curse boundary collapse.
-
-### 3.1 Candidate Threshold Selection Rules
-1. **Canonical Fixed Threshold:** $\tau = 0.25$ (deployment baseline; empirical test pass rate $= 8/8$ on `best.pt`, $6/8$ on `last.pt`).
-2. **Buffered Max-$\tau$ Rule:**
-   $$\tau^*_b = \max \left\{ \tau \in \mathcal{C}^{\text{val}} : \min_{c} \text{Recall}_c^{\text{val}}(\tau) \ge R_{\text{floor}} + b \right\}$$
-   Where $b = 7.5\text{ pp}$ guarantees $\ge 90\%$ test compliance out-of-sample by forcing $\tau^*$ to retreat into the high-recall plateau ($\tau^* \approx 0.05\text{--}0.15$).
-3. **Clopper-Pearson Exact Event Rule:**
-   $R_{\text{floor}} = 0.05^{1/N_{\text{events}}}$. (Note: In Phase 0 audit, this yielded $1/8$ pass rate due to severe winner's curse when events $N \le 7$).
-
-### 3.2 Evaluation Options for Route B
-
-#### Option B.1: External Unseen Subjects (Zero Retraining)
-- **Data Source:** Official unrestricted DMD subjects $\{23, 28, 29, 33, 36, 37\}$ (6 subjects not present in local training/val/test splits).
-- **Procedure:** Obtain RGB face recordings, generate ground-truth cue bounding boxes following standard DMD annotation protocol, and evaluate existing 36 sweep checkpoints.
-- **Compute Cost:** 0 GPU training hours (inference and evaluation only, ~2 hours).
-- **Statistical Power:** Provides 6 completely pristine, out-of-distribution confirmatory subjects.
-
-#### Option B.2: Subject-Level Cross-Validation (K-Fold LOSO)
-- If external subjects are not annotated, execute 5-fold subject-disjoint cross-validation across the 14 local subjects.
-- **Compute Cost:** 5 folds $\times$ 6 ratios $\times$ 2 models $\times$ 2.2 h $\approx 132$ GPU hours.
-
-### 3.3 Sample Size & Event Resolution Requirements
-For a statistical claim that test recall is "within 5 pp" of validation recall at $90\%$ recall:
-- Standard error of sample proportion: $\text{SE} = \sqrt{\frac{p(1-p)}{N}} = \sqrt{\frac{0.90 \times 0.10}{N}} \le 0.025$ ($95\%\text{ CI width} \le 10\text{ pp}$).
-- Requires $N \ge \frac{0.09}{0.000625} = 144$ independent events per class.
-- Current test set contains only:
-  - `yawning`: 18 events (14 on subject_12)
-  - `hand_over_mouth`: 15 events (13 on subject_12)
-- Therefore, within-5-pp claims on tail classes in the current test set are fundamentally **statistically underpowered** due to event-count limits ($N < 20$).
+### ROUTE CONTINUE: Sequential Deep-Pruning Screen (60% to 90%, Seed 0)
+- **Goal:** Determine whether catastrophic representation collapse and metric concealment emerge at extreme sparsity ($60\%\text{--}90\%$).
+- **Design:** Sequential screening on seed 0: ratios $\in \{60\%, 70\%, 80\%, 90\%\}$ for YOLO11n and YOLO26n (8 runs total).
+- **Compute Budget:** ~17 GPU hours ($8 \times \sim 2.1\text{ h}$).
+- **Training Recipe:** Identical to baseline seed-0 runs (identical `args.yaml` diff must be empty); fine-tuned from same-seed baseline for 100 epochs.
+- **Checkpointing:** Cache `best.pt` (primary, consistent with existing 0%–50% grid) and `last.pt` (sensitivity).
+- **Stopping / Collapse Criterion (Data-Derived):**
+  - Training halts for an architecture branch at the first occurrence of:
+    1. Loss divergence, infinite loss, or NaN.
+    2. Model collapse: all-class $\text{mAP}_{50}$ drops by $> 30.0\text{ pp}$ relative to baseline.
+    3. Severe capacity collapse: $\Delta \text{min-class AP}_{50} \le -14.53\text{ pp}$ (exceeding paired evaluation MDE of $14.53\text{ pp}$).
+  - Higher ratios for that model branch are cancelled immediately upon collapse.
+- **Flagging Rule for Multi-Seed Expansion (Capped at 20 GPU-h):**
+  - Expand to $K=3$ seeds ($s \in \{1, 2\}$) ONLY at a specific ratio $r$ if:
+    - **Concealment:** $\Delta \text{mAP}_{50} \ge -3.0\text{ pp}$ AND $\Delta \text{Rec}_{P80} \le -6.57\text{ pp}$ ($3 \times \text{seed SD}$).
+    - **Safety Knee:** $\text{Rec}_{P80}(r) - \text{Rec}_{P80}(r - 10\%) \le -14.53\text{ pp}$ (paired evaluation MDE).
+  - Maximum extra compute capped at 20 GPU hours before requesting user approval.
+  - Do NOT run the 61-run $K=5$ queue. Do NOT resume YOLO26n seed 3.
+- **Exact Launch Command:**
+  ```bash
+  python scripts/run_route_a_stage1.py
+  ```
+- **What Outcomes Support / Refute:**
+  - *If concealment observed at $\ge 60\%$:* Supports that pruning conceals tail-class degradation, but bounds the phenomenon to extreme parameter regimes ($>50\%$).
+  - *If smooth degradation or collapse across all metrics:* Refutes the concealment hypothesis; establishes that edge detectors degrade gracefully or collapse globally.
 
 ---
 
-## 4. Route C: Matched-Precision Edge Safety Evaluation (Zero Retraining)
-
-Route C decouples confidence calibration from representation collapse by benchmarking all existing 36 models at matched operating precisions without running any GPU training.
-
-### 4.1 Objectives & Endpoints
-- **Primary Hypothesis:** Pruning preserves representation ranking ($AP_{50}$ within $\pm 1.5\text{ pp}$) and matched-precision recall ($\text{Rec}_{P80}$ within $\pm 3.0\text{ pp}$), demonstrating that observed fixed-$\tau$ variations reflect threshold rigidity rather than capacity loss.
-- **Compute Cost:** 0 GPU training hours (completed in Phase 0 audit cache).
-- **Deliverables:** Matched operating point curves ($\text{Rec}_{P80}$, $\text{Rec}_{P90}$, $\text{Rec}_{\text{FP05}}$) and per-subject forensic error breakdown.
+### ROUTE RESTART: Subject-Balanced 7-Fold Cross-Validation (Baselines Only)
+- **Goal:** Prospective, unbiased measurement of out-of-sample guardrail transfer on unspent subjects with balanced tail events.
+- **Design:** 14 DMD subjects partitioned into 7 folds of 2 held-out subjects each.
+- **Tail-Balanced Pairing:**
+  - `subject_10` (0 `hand_over_mouth`, 1 `yawning`) is paired with tail-rich `subject_12` (22 `hand_over_mouth`, 24 `yawning`).
+  - Remaining pairs balanced so every fold contains $\ge 4$ tail events:
+    - Fold 1: `(subject_10, subject_12)` (22 hom, 25 yawn)
+    - Fold 2: `(subject_02, subject_05)` (12 hom, 16 yawn)
+    - Fold 3: `(subject_03, subject_11)` (24 hom, 24 yawn)
+    - Fold 4: `(subject_01, subject_04)` (balanced)
+    - Fold 5: `(subject_06, subject_07)` (balanced)
+    - Fold 6: `(subject_08, subject_09)` (balanced)
+    - Fold 7: `(subject_13, subject_14)` (balanced)
+  - Total events available across 14 subjects: 63 `yawning`, 44 `hand_over_mouth`, 57 `drinking`, 58 `phone_use`.
+- **Training Recipe:**
+  - Train on 12 subjects, 100 epochs, identical training arguments.
+  - **`last.pt` ONLY:** No validation-based checkpoint selection (`val` used strictly for logging).
+  - Execute YOLO11n (7 folds $\approx 15\text{ GPU-h}$), then YOLO26n (7 folds $\approx 15\text{ GPU-h}$). Total baselines compute: ~30 GPU hours.
+  - Adding pruned folds (~31 GPU-h) requires separate user approval.
+- **Evaluation Protocol:**
+  - For each fold: calibrate rules on the 6 other folds' out-of-fold pooled detections; evaluate on the held-out fold.
+  - Frozen rule menu:
+    1. Fixed $\tau = 0.25$
+    2. Max-$\tau$ (unbuffered)
+    3. Buffered max-$\tau$ ($b \in \{2.5, 5.0, 7.5\}\text{ pp}$)
+    4. Plateau rule (descending grid)
+    5. Clopper-Pearson rule
+  - Disclose in paper that rule menu was motivated by Phase 0 exploratory audit on spent test split.
+  - Report estimates with 95% bootstrap intervals, not deterministic guarantees.
+- **Exact Launch Command:**
+  ```bash
+  python scripts/train_7fold_cv.py --model yolo11n --checkpoint last
+  ```
+- **What Outcomes Support / Refute:**
+  - *If $\tau^*$ compliance remains low across balanced folds:* Proves conclusively that winner's-curse boundary selection is an intrinsic property of the calibration rule, independent of the local test split.
+  - *If buffered / fixed rules achieve $>90\%$ compliance across folds:* Establishes a validated, publishable deployment standard for safety guardrails in safety-critical edge vision.
 
 ---
 
-## 5. Route R: Conformal & Subject-Adaptive Guardrail Protocol
+## 4. Execution Governance & Decision Gate
 
-Route R resolves the out-of-sample guardrail failure identified in Phase 0 by replacing rigid single thresholds with formal distribution-free risk control.
-
-### 5.1 Formulation
-- Instead of boundary-clamped point thresholds ($\tau^*$), apply split conformal prediction or learn-then-test calibration on validation subjects to guarantee a user-specified bound on the false negative rate:
-  $$P(\text{Recall}_c \ge 1 - \alpha) \ge 1 - \delta$$
-- Evaluates subject-level calibration adaptation using the driver's first 30 seconds of driving video.
-
----
-
-## 6. Execution Governance & Decision Gate
-
-Upon completion of Phase 0:
-1. User reviews the Phase 0 consolidated deliverable and selects the prospective route (**Route A**, **Route B**, **Route C**, **Route R**, or a combination).
-2. To unlock execution, the user must provide an explicit chat confirmation starting with `"APPROVED:"`.
-3. Upon approval, `STATUS` in this document is updated to `FROZEN-BY-USER <git-hash>`, the lock in `scripts/run_route_a_stage1.py` disengages, and execution proceeds.
+Upon delivery of Phase A audit report:
+1. User reviews the Phase A report and decides between **Route CONTINUE** and **Route RESTART**.
+2. Training remains strictly locked by `ALLOW_TRAINING` and `STATUS: FROZEN-BY-USER <hash>`.
+3. To unlock, user issues chat message:
+   `APPROVED: CONTINUE` or `APPROVED: RESTART` followed by `APPROVED: FREEZE <commit-hash>`.
