@@ -158,7 +158,7 @@ def get_all_target_checkpoints():
 
     # Last checkpoints for R9 sensitivity
     for m in models:
-        for s in [0, 1, 2]:
+        for s in range(5):
             p = Path(f'models/{m}/baseline/seed_{s}/weights/last.pt')
             if p.exists():
                 checkpoints.append({
