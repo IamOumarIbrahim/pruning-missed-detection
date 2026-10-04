@@ -1,2 +1,0 @@
-model,eval_metric,mean_recall,std_error_nested_bootstrap,ci_95_lower,ci_95_upper,mde_at_80_power_pp
-yolo11n_baseline_s0,min_class_recall_tau_025,0.8140712386432406,0.10723142951364656,0.59375,0.95,30.02480026382103
