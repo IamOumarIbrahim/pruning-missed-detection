@@ -1,0 +1,3 @@
+rule,mean_pass_rate_pct,ci_lower_2.5_pct,ci_upper_97.5_pct,n_resamples
+fixed_025,88.475,62.5,100.0,2000
+unbuffered_max_tau,14.46875,0.0,37.5,2000

@@ -1,0 +1,2 @@
+metric,val_mean,test_mean,obs_diff,n_permutations,perm_p_value
+yawning_tp_mean_conf_diff,0.7232139365206551,0.5270638715277777,0.19615006499287746,20,0.3

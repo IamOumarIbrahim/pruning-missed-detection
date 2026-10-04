@@ -25,6 +25,25 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+# STRICT EXECUTION GUARD: Halt execution unless explicitly authorized
+ALLOW_TRAINING = (os.environ.get('ALLOW_TRAINING', '0') == '1')
+protocol_path = REPO_ROOT / 'PROTOCOL.md'
+has_frozen_line = False
+if protocol_path.exists():
+    with open(protocol_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            if line.strip().startswith('STATUS: FROZEN-BY-USER '):
+                has_frozen_line = True
+                break
+
+if not (ALLOW_TRAINING and has_frozen_line):
+    sys.stderr.write(
+        "CRITICAL ERROR: Training is locked.\n"
+        "Execution requires environment variable ALLOW_TRAINING=1 AND\n"
+        "PROTOCOL.md containing an explicit line 'STATUS: FROZEN-BY-USER <hash>'.\n"
+    )
+    sys.exit(1)
+
 import torch
 from ultralytics import YOLO
 import prune.pruner
