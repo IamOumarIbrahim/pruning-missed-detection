@@ -1,0 +1,11 @@
+# 320x320 Cropped Driver ROI Dataset for DMD
+path: C:/Dev/repos/Public repos/research/ROI-DMS/partitions/cropped/320x320
+train: train/images
+val: val/images
+test: test/images
+
+names:
+  0: yawning
+  1: hand_over_mouth
+  2: drinking
+  3: phone_use

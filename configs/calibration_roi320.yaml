@@ -1,0 +1,9 @@
+names:
+  0: yawning
+  1: hand_over_mouth
+  2: drinking
+  3: phone_use
+path: C:/Dev/repos/Public repos/research/ROI-DMS/partitions/cropped/320x320
+test: C:/Dev/repos/Public repos/research/pruning-missed-detections/data/calibration_roi320_300.txt
+train: C:/Dev/repos/Public repos/research/pruning-missed-detections/data/calibration_roi320_300.txt
+val: C:/Dev/repos/Public repos/research/pruning-missed-detections/data/calibration_roi320_300.txt
