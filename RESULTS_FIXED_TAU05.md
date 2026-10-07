@@ -1,0 +1,131 @@
+# Benchmark Results: Fixed Operating Point at $\tau = 0.50$ (Ablated by Quantization & Pruning)
+
+> **Protocol:** One fixed confidence threshold $\tau = 0.50$ across every model, every seed, every condition.  
+> **Split:** Held-out test split (`subject_05`, `subject_10`, `subject_12`) only. Greedy bipartite IoU=0.50 matching.  
+> **Report Structure:** Split by **No quantization (FP32/FP16)**, **PTQ (INT8)**, and **QAT (INT8)**.  
+
+---
+
+## Section 1: No Quantization (FP32 Baseline & Pruned Models)
+
+### 1.1 Summary Table: Mean ± SD across 3 Seeds
+
+| Architecture | Sparsity | Total Params | BB+Neck Params | GFLOPs | Trained Size (MB) | Precision (%) | Macro-Recall (%) | Worst-Class Rec (%) | Achieved Param Red (%) |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| YOLO11N | Baseline (0%) | 2,590,620 | 1,909,440 | 6.50 | 5.23 | 93.6 ± 1.2% | 86.4 ± 1.3% | 80.8 ± 1.7% | 0.0% |
+| YOLO11N | Pruned 10% | 2,241,826 | 1,567,302 | 5.63 | 4.59 | 93.9 ± 0.4% | 86.3 ± 3.7% | 79.3 ± 4.2% | 13.5% |
+| YOLO11N | Pruned 20% | 1,944,901 | 1,277,033 | 4.92 | 4.02 | 93.7 ± 1.0% | 88.0 ± 2.9% | 80.1 ± 4.0% | 24.9% |
+| YOLO11N | Pruned 30% | 1,668,655 | 1,007,187 | 4.30 | 3.50 | 94.2 ± 0.5% | 87.2 ± 2.1% | 79.0 ± 0.6% | 35.6% |
+| YOLO11N | Pruned 40% | 1,430,838 | 776,026 | 3.74 | 3.04 | 93.9 ± 1.4% | 84.4 ± 2.3% | 76.8 ± 6.3% | 44.8% |
+| YOLO11N | Pruned 50% | 1,231,676 | 583,264 | 3.30 | 2.65 | 93.0 ± 1.5% | 85.6 ± 2.3% | 78.7 ± 5.2% | 52.5% |
+| YOLO11N | Pruned 60% | 1,040,474 | 398,718 | 2.84 | 2.29 | 93.1 ± 0.5% | 88.1 ± 1.2% | 81.6 ± 0.3% | 59.8% |
+| YOLO11N | Pruned 70% | 890,533 | 255,433 | 2.50 | 2.01 | 91.7 ± 5.0% | 85.6 ± 1.4% | 79.0 ± 5.5% | 65.6% |
+| YOLO11N | Pruned 80% | 766,423 | 137,723 | 2.24 | 1.77 | 91.7 ± 1.1% | 79.8 ± 1.8% | 61.6 ± 9.3% | 70.4% |
+| YOLO11N | Pruned 90% | 675,750 | 53,706 | 2.06 | 1.60 | 92.3 ± 2.4% | 62.3 ± 1.7% | 16.2 ± 1.7% | 73.9% |
+| YOLO26N | Baseline (0%) | 2,505,360 | 1,549,792 | 5.90 | 5.15 | 95.1 ± 0.6% | 85.8 ± 1.7% | 73.7 ± 9.3% | 0.0% |
+| YOLO26N | Pruned 10% | 2,183,875 | 1,262,610 | 5.03 | 4.56 | 95.3 ± 1.1% | 81.4 ± 3.0% | 64.6 ± 9.7% | 12.8% |
+| YOLO26N | Pruned 20% | 1,909,995 | 1,020,389 | 4.33 | 4.04 | 95.2 ± 0.5% | 84.1 ± 2.1% | 72.7 ± 3.0% | 23.8% |
+| YOLO26N | Pruned 30% | 1,655,988 | 799,753 | 3.72 | 3.55 | 94.2 ± 2.3% | 84.6 ± 2.6% | 73.7 ± 8.7% | 33.9% |
+| YOLO26N | Pruned 40% | 1,434,254 | 609,002 | 3.16 | 3.13 | 93.1 ± 0.9% | 83.0 ± 3.5% | 71.7 ± 3.5% | 42.8% |
+| YOLO26N | Pruned 50% | 1,247,456 | 451,824 | 2.73 | 2.77 | 95.1 ± 0.4% | 83.8 ± 1.5% | 72.7 ± 3.0% | 50.2% |
+| YOLO26N | Pruned 60% | 1,065,067 | 302,074 | 2.26 | 2.42 | 95.3 ± 1.8% | 83.4 ± 4.6% | 69.7 ± 10.5% | 57.5% |
+| YOLO26N | Pruned 70% | 921,387 | 188,389 | 1.93 | 2.15 | 95.9 ± 1.0% | 75.2 ± 4.8% | 45.5 ± 16.0% | 63.2% |
+| YOLO26N | Pruned 80% | 799,372 | 98,081 | 1.67 | 1.92 | 94.4 ± 1.1% | 68.6 ± 4.1% | 33.3 ± 18.9% | 68.1% |
+| YOLO26N | Pruned 90% | 707,998 | 36,026 | 1.48 | 1.74 | 93.0 ± 2.3% | 56.7 ± 1.0% | 23.2 ± 14.3% | 71.7% |
+
+### 1.2 Per-Checkpoint Log (FP32)
+
+| Arch | Sparsity | Seed | Total Params | BB+Neck Params | GFLOPs | Trained Size (MB) | Precision | Macro-Recall | Worst-Class Recall | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| YOLO11N | Baseline | Seed 0 | 2,590,620 | 1,909,440 | 6.50 | 5.23 | 92.9% | 85.4% | 81.8% | nan |
+| YOLO11N | Baseline | Seed 1 | 2,590,620 | 1,909,440 | 6.50 | 5.23 | 94.9% | 85.9% | 78.8% | nan |
+| YOLO11N | Baseline | Seed 2 | 2,590,620 | 1,909,440 | 6.50 | 5.23 | 92.9% | 87.9% | 81.8% | nan |
+| YOLO11N | Pruned 10% | Seed 0 | 2,241,826 | 1,567,302 | 5.63 | 4.59 | 94.0% | 83.0% | 78.3% | nan |
+| YOLO11N | Pruned 10% | Seed 1 | 2,241,826 | 1,567,302 | 5.63 | 4.59 | 94.2% | 85.7% | 75.8% | nan |
+| YOLO11N | Pruned 10% | Seed 2 | 2,241,826 | 1,567,302 | 5.63 | 4.59 | 93.4% | 90.3% | 83.9% | nan |
+| YOLO11N | Pruned 20% | Seed 0 | 1,944,901 | 1,277,033 | 4.92 | 4.02 | 92.9% | 87.9% | 80.9% | nan |
+| YOLO11N | Pruned 20% | Seed 1 | 1,944,901 | 1,277,033 | 4.92 | 4.02 | 94.8% | 91.0% | 83.7% | nan |
+| YOLO11N | Pruned 20% | Seed 2 | 1,944,901 | 1,277,033 | 4.92 | 4.02 | 93.4% | 85.1% | 75.8% | nan |
+| YOLO11N | Pruned 30% | Seed 0 | 1,668,655 | 1,007,187 | 4.30 | 3.50 | 93.6% | 85.5% | 79.7% | nan |
+| YOLO11N | Pruned 30% | Seed 1 | 1,668,655 | 1,007,187 | 4.30 | 3.50 | 94.2% | 86.6% | 78.8% | nan |
+| YOLO11N | Pruned 30% | Seed 2 | 1,668,655 | 1,007,187 | 4.30 | 3.50 | 94.7% | 89.6% | 78.7% | nan |
+| YOLO11N | Pruned 40% | Seed 0 | 1,430,838 | 776,026 | 3.74 | 3.04 | 92.4% | 83.0% | 69.7% | nan |
+| YOLO11N | Pruned 40% | Seed 1 | 1,430,838 | 776,026 | 3.74 | 3.04 | 94.2% | 83.2% | 78.8% | nan |
+| YOLO11N | Pruned 40% | Seed 2 | 1,430,838 | 776,026 | 3.74 | 3.04 | 95.2% | 87.1% | 81.8% | nan |
+| YOLO11N | Pruned 50% | Seed 0 | 1,231,676 | 583,264 | 3.30 | 2.65 | 91.2% | 87.3% | 81.7% | nan |
+| YOLO11N | Pruned 50% | Seed 1 | 1,231,676 | 583,264 | 3.30 | 2.65 | 93.6% | 82.9% | 72.7% | nan |
+| YOLO11N | Pruned 50% | Seed 2 | 1,231,676 | 583,264 | 3.30 | 2.65 | 94.1% | 86.6% | 81.8% | nan |
+| YOLO26N | Baseline | Seed 0 | 2,505,360 | 1,549,792 | 5.90 | 5.15 | 94.9% | 86.9% | 81.8% | nan |
+| YOLO26N | Baseline | Seed 1 | 2,505,360 | 1,549,792 | 5.90 | 5.15 | 94.6% | 83.8% | 63.6% | nan |
+| YOLO26N | Baseline | Seed 2 | 2,505,360 | 1,549,792 | 5.90 | 5.15 | 95.7% | 86.7% | 75.8% | nan |
+| YOLO26N | Pruned 10% | Seed 0 | 2,183,875 | 1,262,610 | 5.03 | 4.56 | 95.1% | 84.6% | 75.8% | nan |
+| YOLO26N | Pruned 10% | Seed 1 | 2,183,875 | 1,262,610 | 5.03 | 4.56 | 96.5% | 80.9% | 57.6% | nan |
+| YOLO26N | Pruned 10% | Seed 2 | 2,183,875 | 1,262,610 | 5.03 | 4.56 | 94.3% | 78.7% | 60.6% | nan |
+| YOLO26N | Pruned 20% | Seed 0 | 1,909,995 | 1,020,389 | 4.33 | 4.04 | 95.3% | 83.5% | 69.7% | nan |
+| YOLO26N | Pruned 20% | Seed 1 | 1,909,995 | 1,020,389 | 4.33 | 4.04 | 94.6% | 86.4% | 75.8% | nan |
+| YOLO26N | Pruned 20% | Seed 2 | 1,909,995 | 1,020,389 | 4.33 | 4.04 | 95.6% | 82.4% | 72.7% | nan |
+| YOLO26N | Pruned 30% | Seed 0 | 1,655,988 | 799,753 | 3.72 | 3.55 | 95.7% | 81.6% | 63.6% | nan |
+| YOLO26N | Pruned 30% | Seed 1 | 1,655,988 | 799,753 | 3.72 | 3.55 | 95.3% | 85.8% | 78.8% | nan |
+| YOLO26N | Pruned 30% | Seed 2 | 1,655,988 | 799,753 | 3.72 | 3.55 | 91.5% | 86.3% | 78.8% | nan |
+| YOLO26N | Pruned 40% | Seed 0 | 1,434,254 | 609,002 | 3.16 | 3.13 | 92.1% | 79.4% | 69.7% | nan |
+| YOLO26N | Pruned 40% | Seed 1 | 1,434,254 | 609,002 | 3.16 | 3.13 | 93.8% | 86.4% | 69.7% | nan |
+| YOLO26N | Pruned 40% | Seed 2 | 1,434,254 | 609,002 | 3.16 | 3.13 | 93.5% | 83.3% | 75.8% | nan |
+| YOLO26N | Pruned 50% | Seed 0 | 1,247,456 | 451,824 | 2.73 | 2.77 | 94.9% | 82.9% | 69.7% | nan |
+| YOLO26N | Pruned 50% | Seed 1 | 1,247,456 | 451,824 | 2.73 | 2.77 | 95.5% | 85.4% | 72.7% | nan |
+| YOLO26N | Pruned 50% | Seed 2 | 1,247,456 | 451,824 | 2.73 | 2.77 | 95.0% | 82.9% | 75.8% | nan |
+| YOLO11N | Pruned 70% | Seed 0 | 890,533 | 255,433 | 2.50 | 2.01 | 85.9% | 86.9% | 82.5% | COMPLETED |
+| YOLO11N | Pruned 70% | Seed 1 | 890,533 | 255,433 | 2.50 | 2.01 | 94.5% | 85.7% | 81.8% | COMPLETED |
+| YOLO11N | Pruned 70% | Seed 2 | 890,533 | 255,433 | 2.50 | 2.01 | 94.6% | 84.2% | 72.7% | COMPLETED |
+| YOLO26N | Pruned 70% | Seed 0 | 921,387 | 188,389 | 1.93 | 2.15 | 95.2% | 70.9% | 33.3% | COMPLETED |
+| YOLO26N | Pruned 70% | Seed 1 | 921,387 | 188,389 | 1.93 | 2.15 | 95.5% | 80.3% | 63.6% | COMPLETED |
+| YOLO26N | Pruned 70% | Seed 2 | 921,387 | 188,389 | 1.93 | 2.15 | 97.0% | 74.3% | 39.4% | COMPLETED |
+| YOLO11N | Pruned 90% | Seed 0 | 675,750 | 53,706 | 2.06 | 1.60 | 94.9% | 60.8% | 18.2% | COMPLETED |
+| YOLO11N | Pruned 90% | Seed 1 | 675,750 | 53,706 | 2.06 | 1.60 | 91.6% | 61.9% | 15.2% | COMPLETED |
+| YOLO11N | Pruned 90% | Seed 2 | 675,750 | 53,706 | 2.06 | 1.60 | 90.3% | 64.1% | 15.2% | COMPLETED |
+| YOLO26N | Pruned 90% | Seed 0 | 707,998 | 36,026 | 1.48 | 1.74 | 95.6% | 57.2% | 12.1% | COMPLETED |
+| YOLO26N | Pruned 90% | Seed 1 | 707,998 | 36,026 | 1.48 | 1.74 | 92.2% | 57.4% | 39.3% | COMPLETED |
+| YOLO26N | Pruned 90% | Seed 2 | 707,998 | 36,026 | 1.48 | 1.74 | 91.2% | 55.6% | 18.2% | COMPLETED |
+| YOLO11N | Pruned 60% | Seed 0 | 1,040,474 | 398,718 | 2.84 | 2.29 | 92.8% | 88.8% | 81.8% | COMPLETED |
+| YOLO11N | Pruned 60% | Seed 1 | 1,040,474 | 398,718 | 2.84 | 2.29 | 93.7% | 86.7% | 81.3% | COMPLETED |
+| YOLO11N | Pruned 60% | Seed 2 | 1,040,474 | 398,718 | 2.84 | 2.29 | 92.7% | 88.7% | 81.8% | COMPLETED |
+| YOLO26N | Pruned 60% | Seed 0 | 1,065,067 | 302,074 | 2.26 | 2.42 | 95.6% | 78.6% | 63.6% | COMPLETED |
+| YOLO26N | Pruned 60% | Seed 1 | 1,065,067 | 302,074 | 2.26 | 2.42 | 96.9% | 87.7% | 81.8% | COMPLETED |
+| YOLO26N | Pruned 60% | Seed 2 | 1,065,067 | 302,074 | 2.26 | 2.42 | 93.4% | 83.8% | 63.6% | COMPLETED |
+| YOLO11N | Pruned 80% | Seed 0 | 766,423 | 137,723 | 2.24 | 1.77 | 90.5% | 78.2% | 51.5% | COMPLETED |
+| YOLO11N | Pruned 80% | Seed 1 | 766,423 | 137,723 | 2.24 | 1.77 | 92.3% | 79.5% | 63.6% | COMPLETED |
+| YOLO11N | Pruned 80% | Seed 2 | 766,423 | 137,723 | 2.24 | 1.77 | 92.3% | 81.7% | 69.7% | COMPLETED |
+| YOLO26N | Pruned 80% | Seed 0 | 799,372 | 98,081 | 1.67 | 1.92 | 95.6% | 68.0% | 27.3% | COMPLETED |
+| YOLO26N | Pruned 80% | Seed 1 | 799,372 | 98,081 | 1.67 | 1.92 | 93.4% | 73.0% | 54.5% | COMPLETED |
+| YOLO26N | Pruned 80% | Seed 2 | 799,372 | 98,081 | 1.67 | 1.92 | 94.2% | 64.8% | 18.2% | COMPLETED |
+
+---
+
+## Section 2: Post-Training Quantization (PTQ INT8)
+
+### 2.1 Summary Table: Mean ± SD across 3 Seeds (PTQ INT8)
+
+| Architecture | Sparsity | Total Params | BB+Neck Params | GFLOPs | INT8 Size (MB) | Precision (%) | Macro-Recall (%) | Worst-Class Rec (%) | Achieved Param Red (%) |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| YOLO11N | Baseline (0%) | 2,590,620 | 1,909,440 | 6.50 | 2.92 | 81.9% | 85.9% | 78.8% | 0.0% |
+
+### 2.2 Per-Checkpoint Log (PTQ INT8)
+
+| Arch | Sparsity | Seed | Total Params | BB+Neck Params | GFLOPs | INT8 Size (MB) | Precision | Macro-Recall | Worst-Class Recall | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| YOLO11N | Baseline | Seed 0 | 2,590,620 | 1,909,440 | 6.50 | 2.92 | 81.9% | 85.9% | 78.8% | COMPLETED |
+
+---
+
+## Section 3: Quantization-Aware Training (QAT INT8)
+
+### 3.1 Summary Table: Mean ± SD across 3 Seeds (QAT INT8)
+
+| Architecture | Sparsity | Total Params | BB+Neck Params | GFLOPs | INT8 Size (MB) | Precision (%) | Macro-Recall (%) | Worst-Class Rec (%) | Achieved Param Red (%) |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| YOLO11N | Pruned 60% | 1,040,474 | 398,718 | 2.84 | 1.45 | 87.6% | 89.4% | 83.3% | 59.8% |
+
+### 3.2 Per-Checkpoint Log (QAT INT8)
+
+| Arch | Sparsity | Seed | Total Params | BB+Neck Params | GFLOPs | INT8 Size (MB) | Precision | Macro-Recall | Worst-Class Recall | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| YOLO11N | Pruned 60% | Seed 0 | 1,040,474 | 398,718 | 2.84 | 1.45 | 87.6% | 89.4% | 83.3% | COMPLETED |

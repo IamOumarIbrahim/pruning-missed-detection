@@ -1,0 +1,9 @@
+names:
+  0: yawning
+  1: hand_over_mouth
+  2: drinking
+  3: phone_use
+path: C:\Dev\repos\Public repos\research\pruning-missed-detections\data\processed\RGB
+test: yolo/test.txt
+train: yolo/calibration_300.txt
+val: yolo/calibration_300.txt
