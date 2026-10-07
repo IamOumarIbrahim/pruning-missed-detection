@@ -10,7 +10,7 @@
 
 | Model Architecture | Input Resolution | Sparsity / Condition | Precision / Quant | Total Params | GFLOPs | Model Size (MB) | Precision (%) | Macro-Recall (%) | Worst-Class Recall (%) | Avg Epochs | Seeds Done |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| *Execution in progress...* | | | | | | | | | | | |
+| YOLO11N | 320x320 Crop | Pruned 70% | PTQ INT8 | 890,533 | 0.614 | 1.19 | 79.5% | 79.9% | 60.6% | 70.0 | 1 / 3 |
 
 ---
 
@@ -18,7 +18,7 @@
 
 | Model | Input Res | Condition | Quantization | Seed | Epochs Trained | Params | GFLOPs | Size (MB) | Precision (%) | Macro-Recall (%) | Worst-Class Recall (%) | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| *Execution in progress...* | | | | | | | | | | | | |
+| YOLO11N | 320x320 Crop | Pruned 70% | PTQ INT8 | Seed 72 | 70 / 80 | 890,533 | 0.614 | 1.19 | 79.5% | 79.9% | 60.6% | COMPLETED |
 
 ---
 
