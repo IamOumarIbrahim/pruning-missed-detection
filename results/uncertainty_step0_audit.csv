@@ -1,0 +1,9 @@
+split,class,instances,distinct_clips,total_clips,total_subjects,is_unreliable
+val,yawning,32,5,15,3,True
+val,hand_over_mouth,30,4,15,3,True
+val,drinking,54,3,15,3,True
+val,phone_use,523,3,15,3,True
+test,yawning,33,5,13,3,True
+test,hand_over_mouth,28,5,13,3,True
+test,drinking,56,3,13,3,True
+test,phone_use,497,3,13,3,True
