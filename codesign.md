@@ -10,7 +10,7 @@
 
 | Model Architecture | Input Resolution | Sparsity / Condition | Precision / Quant | Total Params | GFLOPs | Model Size (MB) | Precision (%) | Macro-Recall (%) | Worst-Class Recall (%) | Avg Epochs | Seeds Done |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| YOLO11N | 320x320 Crop | Pruned 70% | PTQ INT8 | 890,533 | 0.614 | 1.19 | 79.5 ± 0.0% | 79.9 ± 0.0% | 60.6 ± 0.0% | 70.0 | 2 / 3 |
+| YOLO11N | 320x320 Crop | Pruned 70% | PTQ INT8 | 890,533 | 0.614 | 1.19 | 79.5 ± 0.0% | 79.9 ± 0.0% | 60.6 ± 0.0% | 70.0 | 3 / 3 |
 
 ---
 
@@ -20,6 +20,7 @@
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | YOLO11N | 320x320 Crop | Pruned 70% | PTQ INT8 | Seed 72 | 70 / 80 | 890,533 | 0.614 | 1.19 | 79.5% | 79.9% | 60.6% | COMPLETED |
 | YOLO11N | 320x320 Crop | Pruned 70% | PTQ INT8 | Seed 73 | 70 / 80 | 890,533 | 0.614 | 1.19 | 79.5% | 79.9% | 60.6% | COMPLETED |
+| YOLO11N | 320x320 Crop | Pruned 70% | PTQ INT8 | Seed 74 | 70 / 80 | 890,533 | 0.614 | 1.19 | 79.5% | 79.9% | 60.6% | COMPLETED |
 
 ---
 
