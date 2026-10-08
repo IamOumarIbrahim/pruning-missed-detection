@@ -1,6 +1,6 @@
 task: detect
 mode: train
-model: C:\Dev\repos\Public repos\research\pruning-missed-detections\models\codesign\yolo11n_320_pruned70\init_pruned.pt
+model: C:\Dev\repos\Public repos\research\pruning-missed-detections\models\codesign\yolo11n_320_pruned70\init_pruned_seed73.pt
 data: C:\Dev\repos\Public repos\research\pruning-missed-detections\configs\dmd_roi_320.yaml
 epochs: 80
 time: null

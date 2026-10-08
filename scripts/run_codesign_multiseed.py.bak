@@ -254,7 +254,7 @@ def run_pruned_crop_model(crop_size=320, seed=72, data_yaml=None, calib_yaml=Non
             return
 
     output_dir = REPO_ROOT / 'models' / 'codesign' / f'yolo11n_{crop_size}_pruned70' / f'seed_{seed}'
-    init_pruned_pt = REPO_ROOT / 'models' / 'codesign' / f'yolo11n_{crop_size}_pruned70' / ('init_pruned.pt' if seed == 72 else f'init_pruned_seed{seed}.pt')
+    init_pruned_pt = REPO_ROOT / 'models' / 'codesign' / f'yolo11n_{crop_size}_pruned70' / 'init_pruned.pt'
     train_dir = output_dir / 'train'
     best_pt = train_dir / 'weights' / 'best.pt'
     res_csv = train_dir / 'results.csv'
@@ -264,7 +264,7 @@ def run_pruned_crop_model(crop_size=320, seed=72, data_yaml=None, calib_yaml=Non
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # 1. Prune directly at crop resolution from YOLO11N baseline if not already pruned
-    src_pt = REPO_ROOT / 'models' / 'yolo11n' / 'baseline' / f'seed_{seed - 72}' / 'weights' / 'best.pt'
+    src_pt = REPO_ROOT / 'models' / 'yolo11n' / 'baseline' / 'seed_0' / 'weights' / 'best.pt'
     if not init_pruned_pt.exists():
         print(f"Step 1: Pruning baseline directly at {crop_size}x{crop_size} (ratio = 0.70)...")
         prune_model(src_pt, 0.70, init_pruned_pt, imgsz=crop_size)
@@ -468,38 +468,38 @@ def main():
             device=args.device,
         )
 
-#     # Architecture 3: YOLOv8N 640 Native
-#     for seed in SEEDS:
-#         run_baseline_640(
-#             model_name='YOLOv8N',
-#             src_pt=FILOGRAPHY_DIR / 'yolov8n.pt',
-#             seed=seed,
-#             test_txt=TEST_640_TXT,
-#             test_gts=gts_640,
-#             device=args.device,
-#         )
-# 
-#     # Architecture 4: YOLOv10N 640 Native
-#     for seed in SEEDS:
-#         run_baseline_640(
-#             model_name='YOLOv10N',
-#             src_pt=FILOGRAPHY_DIR / 'yolov10n.pt',
-#             seed=seed,
-#             test_txt=TEST_640_TXT,
-#             test_gts=gts_640,
-#             device=args.device,
-#         )
-# 
-#     # Architecture 5: YOLO11N 640 Native
-#     for seed in SEEDS:
-#         run_baseline_640(
-#             model_name='YOLO11N',
-#             src_pt=FILOGRAPHY_DIR / 'yolo11n.pt',
-#             seed=seed,
-#             test_txt=TEST_640_TXT,
-#             test_gts=gts_640,
-#             device=args.device,
-#         )
+    # Architecture 3: YOLOv8N 640 Native
+    for seed in SEEDS:
+        run_baseline_640(
+            model_name='YOLOv8N',
+            src_pt=FILOGRAPHY_DIR / 'yolov8n.pt',
+            seed=seed,
+            test_txt=TEST_640_TXT,
+            test_gts=gts_640,
+            device=args.device,
+        )
+
+    # Architecture 4: YOLOv10N 640 Native
+    for seed in SEEDS:
+        run_baseline_640(
+            model_name='YOLOv10N',
+            src_pt=FILOGRAPHY_DIR / 'yolov10n.pt',
+            seed=seed,
+            test_txt=TEST_640_TXT,
+            test_gts=gts_640,
+            device=args.device,
+        )
+
+    # Architecture 5: YOLO11N 640 Native
+    for seed in SEEDS:
+        run_baseline_640(
+            model_name='YOLO11N',
+            src_pt=FILOGRAPHY_DIR / 'yolo11n.pt',
+            seed=seed,
+            test_txt=TEST_640_TXT,
+            test_gts=gts_640,
+            device=args.device,
+        )
 
     print("\n" + "=" * 80)
     print("ALL MULTI-SEED RUNS (80 EP + EARLY STOPPING) COMPLETED SUCCESSFULLY!")
