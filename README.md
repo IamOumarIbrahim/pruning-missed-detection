@@ -2,8 +2,6 @@
 
 ## 1. Experimental Framework & Working Hypotheses
 
-Deploying lightweight object detection models for in-cabin driver safety (monitoring `phone_use`, `drinking`, `yawning`, and `hand_over_mouth`) demands strict worst-case safety guarantees under real-time compute constraints.
-
 ### Working Hypotheses (Exploratory)
 - **$H_1$ (Calibration Shift vs. Representation Collapse):** Structured channel pruning up to 50% preserves class ranking (per-class AP50 remains stable within ±2 pp), but shifts confidence score calibration on rare tail classes, creating artificial recall degradation under rigid, uncalibrated operational thresholds ($\tau = 0.50$).
 - **$H_2$ (Out-of-Sample Guardrail Fragility):** Adaptive threshold guardrails ($\tau^*$) tuned on a disjoint validation split fail to maintain regulatory safety floors ($R_{\text{floor}}$) out-of-sample on unseen test subjects due to inter-subject score calibration drift.
@@ -21,7 +19,7 @@ The evaluation is conducted on the **Driver Monitoring Dataset (DMD)** across **
 | **Validation** | 3 subjects (`02, 03, 11`) | 3,423 | 639 (18.7%) | 2,784 (81.3%) | 32 | 30 | 54 | 523 (81.8%) |
 | **Test (Held-Out)** | 3 subjects (`05, 10, 12`) | 3,213 | 614 (19.1%) | 2,599 (80.9%) | **33** (5.4%) | **28** (4.6%) | 56 (9.1%) | **497** (80.9%) |
 
-> **Statistical Note on Tail Classes:** In the held-out test split, `hand_over_mouth` has only $N=28$ ground-truth instances (each missed frame shifts recall by **3.57%**), and `yawning` has $N=33$ instances (**3.03%** per frame). Furthermore, frames from the same subject/clip are temporally correlated, meaning frame-level metrics have higher effective variance than independent identically distributed draws.
+> **Note:** Tail classes have very few test instances (hand_over_mouth N=28, yawning N=33), so frame-level recall metrics carry high effective variance due to temporal correlation within subjects.
 
 ---
 
