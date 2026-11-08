@@ -1,5 +1,4 @@
-# DMD RGB dataset configuration for Ultralytics YOLO.
-
+# Full-frame DMD RGB dataset for Ultralytics. Paths are relative to the repo root.
 path: data/processed/RGB
 train: yolo/train.txt
 val: yolo/val.txt

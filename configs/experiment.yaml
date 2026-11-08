@@ -1,0 +1,42 @@
+# Single source of truth for every experiment in the paper.
+classes: [yawning, hand_over_mouth, drinking, phone_use]
+
+splits:                     # subject-disjoint 8:3:3
+  train: [1, 4, 6, 7, 8, 9, 13, 14]
+  val:   [2, 3, 11]
+  test:  [5, 10, 12]
+
+seeds: [0, 1, 2]
+safety_margin: 0.05         # delta in R_floor = R_base - delta (macro-recall)
+
+training:                   # shared by every full training and fine-tuning run
+  epochs: 100
+  batch: 16
+  optimizer: auto           # resolves to MuSGD(lr=0.01, momentum=0.9) above 10,000 iterations
+  lrf: 0.01
+  weight_decay: 0.0005
+  patience: 0
+
+codesign:                   # fine-tuning a model already trained on this input converges early
+  epochs: 50
+  patience: 10
+  cache: ram
+  workers: 2                # each Windows worker holds its own copy of the cache
+
+pruning:
+  ratios: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+  min_channels: 8
+
+input:
+  crop_box: [140, 120, 540, 520]   # x1, y1, x2, y2 on the 640 x 640 frame
+  collage_tiles:                   # source box -> destination box on a 640 x 640 canvas
+    head_strip: {src: [173,   0, 493, 640], dst: [  0,   0, 320, 640]}
+    right_box:  {src: [320, 215, 640, 535], dst: [320,   0, 640, 320]}
+    left_box:   {src: [  0, 215, 320, 535], dst: [320, 320, 640, 640]}
+  resolutions: [640, 320, 160, 80]
+
+quantization:
+  calibration_images: 300   # sampled from the training subjects
+  calibration_seed: 42
+  qat_epochs: 5
+  qat_lr0: 0.001

@@ -1,0 +1,21 @@
+\definecolor{dmsblue}{HTML}{2A78D6}
+\definecolor{dmsorange}{HTML}{EB6834}
+\definecolor{dmsaqua}{HTML}{1BAF7A}
+\definecolor{dmsink}{HTML}{52514E}
+\begin{tikzpicture}
+\begin{axis}[width=0.95\columnwidth, height=5.0cm, grid=major, grid style={line width=.2pt, draw=gray!30},
+  tick label style={font=\scriptsize}, label style={font=\small},
+  xlabel={Target sparsity (\%)}, ylabel={$\text{Eff}_{\text{FLOPs}}$},
+  xmin=-3, xmax=93, ymin=0, xtick={0,10,...,90},
+  legend pos=north west, legend columns=2, legend cell align=left,
+  legend style={font=\scriptsize, draw=gray!50}]
+\addplot[color=dmsblue, mark=*, mark size=1.5pt, line width=0.9pt] coordinates {(0,13.28) (10,15.33) (20,17.88) (30,20.29) (40,22.59) (50,25.94) (60,31.01) (70,34.21) (80,35.59) (90,30.20)};
+\addlegendentry{YOLO11n}
+\addplot[color=dmsblue, dashed, line width=0.8pt, mark=none] coordinates {(0,12.51) (10,14.45) (20,16.54) (30,18.93) (40,21.78) (50,24.66) (60,28.66) (70,32.53) (80,36.28) (90,39.46)};
+\addlegendentry{YOLO11n limit}
+\addplot[color=dmsorange, mark=triangle*, mark size=1.5pt, line width=0.9pt] coordinates {(0,15.09) (10,16.88) (20,20.00) (30,22.83) (40,27.04) (50,31.96) (60,37.13) (70,41.89) (80,47.43) (90,42.73)};
+\addlegendentry{YOLO26n}
+\addplot[color=dmsorange, dashed, line width=0.8pt, mark=none] coordinates {(0,14.24) (10,16.70) (20,19.42) (30,22.60) (40,26.61) (50,30.82) (60,37.11) (70,43.64) (80,50.40) (90,56.67)};
+\addlegendentry{YOLO26n limit}
+\end{axis}
+\end{tikzpicture}

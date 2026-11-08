@@ -1,24 +1,36 @@
-AGENT.md
-
 # Python
 __pycache__/
 *.pyc
-*.pyo
+.pytest_cache/
+.venv/
 
-# Training artifacts
-*.pt
-*.engine
-*.onnx
-*.cache
+# Local artefacts: rebuilt by the pipeline, published as a release if needed
+models/
 runs/
+*.pt
+*.onnx
+*.engine
+*.cache
 
+# Dataset media: DMD frames need their own licence (see data/README.md)
+data/processed/RGB/images
+data/partitions
 
+# Raw detections and run logs: large, and rebuilt by the scripts
+results/detections/
+results/logs/
 
+# LaTeX build output
+paper/build/
+*.aux
+*.log
+*.out
+*.synctex.gz
 
 # IDE
 .vscode/
 .idea/
 
-# Dataset images (linked or local media)
-data/processed/RGB/images/
-data/processed/RGB/images
+# Private notes kept locally, never committed
+docs/archive/AGENT.md
+docs/archive/METHODOLOGY_SPEC.md

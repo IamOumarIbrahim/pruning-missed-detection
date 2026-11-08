@@ -1,0 +1,26 @@
+\begin{table*}[!t]
+\renewcommand{\arraystretch}{0.85}
+\caption{YOLO11n FP32, INT8 PTQ, and INT8 QAT over three seeds at $\tau=0.5$}
+\label{tab:quantization}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}rrrc rccrc rccrc@{}}
+\toprule
+ & & & & \multicolumn{5}{c}{INT8 PTQ} & \multicolumn{5}{c}{INT8 QAT} \\
+\cmidrule(lr){5-9}\cmidrule(lr){10-14}
+Sparsity (\%) & Param.\ red.\ (\%) & GFLOPs & FP32 $R$ (\%) & MB & $P$ (\%) & $R$ (\%) & $\text{Eff}_{\text{MB}}$ & Safe & MB & $P$ (\%) & $R$ (\%) & $\text{Eff}_{\text{MB}}$ & Safe \\
+\midrule
+0 & 0.0 & 6.50 & $86.4\pm1.3$ & 3.13 & $85.5\pm5.4$ & $85.6\pm1.3$ & 27.3 & \checkmark & 2.92 & $84.6\pm5.5$ & $86.0\pm1.7$ & 29.5 & \checkmark \\
+10 & 13.5 & 5.63 & $86.3\pm3.7$ & 2.81 & $89.0\pm1.8$ & $84.6\pm4.6$ & 30.1 & \checkmark & 2.60 & $87.5\pm3.6$ & $86.3\pm2.9$ & 33.2 & \checkmark \\
+20 & 24.9 & 4.92 & $88.0\pm2.9$ & 2.52 & $86.8\pm1.5$ & $87.6\pm1.9$ & 34.7 & \checkmark & 2.31 & $83.8\pm4.0$ & $87.7\pm2.2$ & 37.9 & \checkmark \\
+30 & 35.6 & 4.30 & $87.2\pm2.1$ & 2.25 & $87.6\pm2.1$ & $86.9\pm2.1$ & 38.6 & \checkmark & 2.04 & $85.1\pm3.5$ & $86.8\pm2.8$ & 42.5 & \checkmark \\
+40 & 44.8 & 3.74 & $84.4\pm2.3$ & 2.02 & $87.1\pm1.5$ & $84.9\pm2.0$ & 42.0 & \checkmark & 1.81 & $87.1\pm3.3$ & $84.0\pm4.9$ & 46.3 & \checkmark \\
+50 & 52.5 & 3.30 & $85.6\pm2.3$ & 1.82 & $85.8\pm4.6$ & $85.0\pm2.8$ & 46.7 & \checkmark & 1.62 & $85.2\pm2.3$ & $87.6\pm1.9$ & 54.0 & \checkmark \\
+60 & 59.8 & 2.84 & $88.1\pm1.2$ & 1.63 & $84.1\pm1.1$ & $87.7\pm2.3$ & 53.7 & \checkmark & 1.44 & $84.1\pm3.1$ & $86.9\pm0.7$ & 60.5 & \checkmark \\
+70 & 65.6 & 2.50 & $85.6\pm1.4$ & 1.48 & $84.2\pm7.1$ & $84.3\pm1.2$ & 56.8 & \checkmark & 1.29 & $83.2\pm5.8$ & $84.8\pm3.0$ & 65.7 & \checkmark \\
+80 & 70.4 & 2.24 & $79.8\pm1.8$ & 1.36 & $82.9\pm2.2$ & $78.9\pm1.9$ & 58.0 & $\times$ & 1.17 & $83.7\pm1.7$ & $80.2\pm1.0$ & 68.6 & $\times$ \\
+90 & 73.9 & 2.06 & $62.3\pm1.7$ & 1.27 & $80.2\pm8.0$ & $62.0\pm2.2$ & 48.9 & $\times$ & 1.08 & $78.2\pm1.2$ & $61.2\pm0.5$ & 56.7 & $\times$ \\
+\bottomrule
+\end{tabular}
+\end{table*}

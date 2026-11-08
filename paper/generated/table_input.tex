@@ -1,0 +1,32 @@
+\begin{table*}[!t]
+\renewcommand{\arraystretch}{0.9}
+\caption{FP32 YOLO11n by input method and resolution at $\tau=0.5$}
+\label{tab:accuracy}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}rrccc rrrc@{}}
+\toprule
+Input (px) & GFLOPs & $P$ (\%) & $R$ (\%) & $F1$ (\%) & mAP@0.5 & mAP@0.5:0.95 & $R$ strict\textsuperscript{a} (\%) & Safe \\
+\midrule
+\multicolumn{9}{l}{\textit{Resize}} \\
+640 & 6.50 & $84.9\pm4.0$ & $87.4\pm2.6$ & $84.6\pm2.0$ & 92.5 & 55.6 & 87.4 & \checkmark \\
+320 & 1.61 & $87.3\pm1.4$ & $88.3\pm1.2$ & $87.4\pm0.9$ & 93.3 & 58.8 & 88.3 & \checkmark \\
+160 & 0.40 & $88.3\pm1.5$ & $80.7\pm1.6$ & $83.1\pm0.8$ & 90.8 & 54.3 & 80.7 & $\times$ \\
+80 & 0.14 & $87.3\pm0.6$ & $72.6\pm1.7$ & $77.1\pm1.3$ & 84.3 & 47.3 & 72.6 & $\times$ \\
+\midrule
+\multicolumn{9}{l}{\textit{Crop}} \\
+640 & 6.50 & $87.1\pm1.7$ & $81.5\pm2.3$ & $83.2\pm1.0$ & 87.8 & 58.8 & 72.6 & \checkmark \\
+320 & 1.61 & $87.5\pm2.5$ & $84.7\pm0.8$ & $85.4\pm1.4$ & 89.0 & 61.4 & 75.8 & \checkmark \\
+160 & 0.40 & $87.8\pm1.0$ & $82.3\pm3.1$ & $84.2\pm1.7$ & 86.6 & 58.2 & 73.5 & \checkmark \\
+80 & 0.14 & $86.3\pm4.6$ & $75.7\pm2.6$ & $79.0\pm2.1$ & 84.5 & 53.2 & 67.0 & $\times$ \\
+\midrule
+\multicolumn{9}{l}{\textit{Collage}} \\
+640 & 6.50 & $86.9\pm2.4$ & $90.5\pm2.2$ & $87.9\pm1.2$ & 92.3 & 66.8 & 89.0 & \checkmark \\
+320 & 1.61 & $86.6\pm0.8$ & $93.2\pm0.7$ & $89.2\pm0.7$ & 92.6 & 67.9 & 91.1 & \checkmark \\
+160 & 0.40 & $82.5\pm1.7$ & $88.7\pm1.8$ & $84.8\pm1.5$ & 87.1 & 59.8 & 87.1 & \checkmark \\
+80 & 0.14 & $82.9\pm2.8$ & $75.3\pm3.0$ & $76.7\pm1.4$ & 80.0 & 49.9 & 73.5 & $\times$ \\
+\bottomrule
+\multicolumn{9}{l}{\textsuperscript{a}A box counts only if at least 50\% of it stays visible.} \\
+\end{tabular}
+\end{table*}

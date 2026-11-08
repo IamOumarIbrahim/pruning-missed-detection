@@ -1,0 +1,20 @@
+\definecolor{dmsblue}{HTML}{2A78D6}
+\definecolor{dmsorange}{HTML}{EB6834}
+\definecolor{dmsaqua}{HTML}{1BAF7A}
+\definecolor{dmsink}{HTML}{52514E}
+\begin{tikzpicture}
+\begin{axis}[width=0.95\columnwidth, height=5.0cm, grid=major, grid style={line width=.2pt, draw=gray!30},
+  tick label style={font=\scriptsize}, label style={font=\small},
+  xlabel={Target sparsity (\%)}, ylabel={Macro-recall (\%)},
+  xmin=-3, xmax=93, ymin=0, ymax=100, xtick={0,10,...,90},
+  legend pos=south west, legend cell align=left, legend style={font=\scriptsize, draw=gray!50},
+  error bars/error bar style={line width=0.5pt, solid},
+  error bars/error mark options={line width=0.5pt, mark size=1.2pt, rotate=90}]
+\addplot[color=dmsblue, mark=*, mark size=1.5pt, line width=0.9pt, error bars/.cd, y dir=both, y explicit] coordinates {(0,86.38) +- (0,1.31) (10,86.32) +- (0,3.67) (20,88.00) +- (0,2.91) (30,87.22) +- (0,2.13) (40,84.42) +- (0,2.29) (50,85.60) +- (0,2.33) (60,88.07) +- (0,1.22) (70,85.60) +- (0,1.39) (80,79.83) +- (0,1.76) (90,62.27) +- (0,1.66)};
+\addlegendentry{FP32}
+\addplot[color=dmsorange, mark=square*, mark size=1.5pt, line width=0.9pt, error bars/.cd, y dir=both, y explicit] coordinates {(0,85.60) +- (0,1.35) (10,84.63) +- (0,4.63) (20,87.57) +- (0,1.87) (30,86.94) +- (0,2.13) (40,84.87) +- (0,1.99) (50,85.03) +- (0,2.79) (60,87.67) +- (0,2.32) (70,84.34) +- (0,1.23) (80,78.89) +- (0,1.93) (90,61.96) +- (0,2.25)};
+\addlegendentry{INT8 PTQ}
+\addplot[color=dmsaqua, mark=triangle*, mark size=1.5pt, line width=0.9pt, error bars/.cd, y dir=both, y explicit] coordinates {(0,85.99) +- (0,1.71) (10,86.34) +- (0,2.94) (20,87.69) +- (0,2.17) (30,86.82) +- (0,2.82) (40,84.02) +- (0,4.94) (50,87.63) +- (0,1.86) (60,86.88) +- (0,0.72) (70,84.78) +- (0,3.04) (80,80.20) +- (0,0.99) (90,61.22) +- (0,0.50)};
+\addlegendentry{INT8 QAT}
+\end{axis}
+\end{tikzpicture}

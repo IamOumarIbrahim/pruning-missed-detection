@@ -1,0 +1,22 @@
+\definecolor{dmsblue}{HTML}{2A78D6}
+\definecolor{dmsorange}{HTML}{EB6834}
+\definecolor{dmsaqua}{HTML}{1BAF7A}
+\definecolor{dmsink}{HTML}{52514E}
+\begin{tikzpicture}
+\begin{axis}[width=0.95\columnwidth, height=5.2cm, xmode=log, log basis x=10, grid=major,
+  grid style={line width=.2pt, draw=gray!30}, tick label style={font=\scriptsize}, label style={font=\small},
+  xlabel={GFLOPs}, ylabel={Test macro-recall (\%)}, xmin=0.1, xmax=10, ymin=40, ymax=100,
+  legend pos=south east, legend cell align=left, legend style={font=\scriptsize, draw=gray!50},
+  error bars/error bar style={line width=0.5pt, solid},
+  error bars/error mark options={line width=0.5pt, mark size=1.2pt, rotate=90}]
+\addplot[only marks, color=dmsblue, mark=*, mark size=2.2pt, error bars/.cd, y dir=both, y explicit] coordinates {(1.614,86.11) +- (0,0.95) (0.614,72.15) +- (0,3.67)};
+\addlegendentry{Resize}
+\addplot[only marks, color=dmsorange, mark=square*, mark size=2.2pt, error bars/.cd, y dir=both, y explicit] coordinates {(0.403,78.74) +- (0,3.35) (0.265,72.51) +- (0,0.72) (1.614,83.85) +- (0,1.69) (0.814,77.12) +- (0,7.07) (0.614,65.35) +- (0,5.26)};
+\addlegendentry{Crop}
+\addplot[only marks, color=dmsaqua, mark=triangle*, mark size=2.2pt, error bars/.cd, y dir=both, y explicit] coordinates {(0.403,83.84) +- (0,4.77) (0.265,81.53) +- (0,4.32) (0.203,73.76) +- (0,4.81) (0.153,46.23) +- (0,2.51) (1.614,92.89) +- (0,0.19) (0.614,78.02) +- (0,0.89)};
+\addlegendentry{Collage}
+\addplot[only marks, color=black, mark=diamond*, mark size=2.6pt] coordinates {(6.503,86.38)};
+\addlegendentry{Baseline FP32}
+\addplot[color=dmsink, dashed, line width=0.8pt, forget plot] coordinates {(0.1,81.38) (10,81.38)};
+\end{axis}
+\end{tikzpicture}

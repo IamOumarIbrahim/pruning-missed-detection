@@ -1,8 +1,17 @@
-ultralytics>=8.4.0
-torch>=2.0.0
-torch-pruning>=1.6.0
+# Versions that produced the paper. Ultralytics changes export behaviour between
+# releases, so keep it pinned: INT8 ONNX export differs between 8.4.120 and 8.4.174.
+ultralytics==8.4.174
+torch==2.6.0
+torchvision==0.21.0
+torch-pruning==1.6.1
+nvidia-modelopt==0.48.0   # fake-quantization for quantization-aware training
+onnx==1.22.0
+onnxruntime==1.30.0
+onnxslim==0.1.96
 numpy
+pandas
+pillow
 pyyaml
-onnx
-onnxruntime-gpu
-tensorrt>=10.0.0
+matplotlib
+scipy
+pytest

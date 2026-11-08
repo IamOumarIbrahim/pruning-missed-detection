@@ -1,0 +1,20 @@
+{
+  "r_base": 0.8637824421275125,
+  "r_floor": 0.8137824421275125,
+  "val_r_base": 0.8661515871751293,
+  "val_r_floor": 0.8161515871751293,
+  "seed_sd_fixed": 0.022838512618387995,
+  "seed_sd_tuned": 0.02305770554214893,
+  "selected": {
+    "method": "collage",
+    "resolution": 160,
+    "sparsity": 50,
+    "quant": "ptq"
+  },
+  "recommended": {
+    "method": "collage",
+    "resolution": 320,
+    "sparsity": 0,
+    "quant": "ptq"
+  }
+}

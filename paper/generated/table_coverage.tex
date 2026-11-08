@@ -1,0 +1,20 @@
+\begin{table}[t]
+\caption{Share of boxes (\%) kept by each input method}
+\label{tab:coverage}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lrrrrrrrr@{}}
+\toprule
+ & \multicolumn{4}{c}{\textbf{Train}} & \multicolumn{4}{c}{\textbf{Test}} \\
+\cmidrule(lr){2-5}\cmidrule(lr){6-9}
+ & \multicolumn{2}{c}{Crop} & \multicolumn{2}{c}{Collage} & \multicolumn{2}{c}{Crop} & \multicolumn{2}{c}{Collage} \\
+\textbf{Class} & Full & $\geq$50\% & Full & $\geq$50\% & Full & $\geq$50\% & Full & $\geq$50\% \\
+\midrule
+Yawning & 97 & 100 & 100 & 100 & 100 & 100 & 100 & 100 \\
+Hand-over-mouth & 5 & 100 & 82 & 100 & 0 & 100 & 75 & 100 \\
+Drinking & 0 & 53 & 9 & 92 & 16 & 73 & 27 & 100 \\
+Phone use & 6 & 67 & 53 & 99 & 3 & 64 & 34 & 93 \\
+\bottomrule
+\end{tabular}
+\end{table}
