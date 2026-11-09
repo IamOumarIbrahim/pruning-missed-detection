@@ -1,0 +1,125 @@
+\documentclass[10pt]{article}
+\usepackage[a4paper,margin=2.2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern,microtype,booktabs,enumitem,xcolor}
+\usepackage[hidelinks]{hyperref}
+\setlist{nosep,leftmargin=1.4em}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\newcommand{\comment}[2]{\subsection*{#1}\textit{#2}\par}
+\newcommand{\changes}[1]{\par\textbf{Changes:} #1}
+
+\begin{document}
+
+{\Large\bfseries ICAUC-72: Response to Reviewers}\\[3pt]
+Model Compression and Input Optimization Co-Design for Edge Driver Monitoring Systems\\
+Oumar Mamoun Ibrahim, Mohamad Khairi bin Ishak, Ahmed Atef Abouelhamd \hfill 9 November 2026
+
+\section*{Summary}
+We thank both reviewers for their careful comments. All changes are marked in blue in the highlighted manuscript.
+
+While answering Reviewer~1, we re-ran and re-scored every experiment under one shared evaluation protocol. This audit found several errors in the submitted pipeline, so some results changed and we now propose a different configuration. The main changes are:
+\begin{itemize}
+\item All phases now use the same fixed confidence threshold and the same rule for matching detections to ground truth, so results from different phases can be compared directly.
+\item Quantization-aware training (QAT) now really simulates 8-bit integer (INT8) arithmetic during training, and both QAT and post-training quantization (PTQ) run on three seeds.
+\item PTQ was unstable between seeds because rare extreme activations set its value ranges, and a moving-average calibration fixes this.
+\item Every input method is now scored on the same test boxes, so an object that the input step removes counts as a miss.
+\item The new recommendation is the cheapest configuration that holds the recall floor: a 160-pixel collage input with 30\% pruning and INT8 PTQ.
+\end{itemize}
+The Phase~I pruning results for YOLO11n did not change, and the manuscript is still eight pages long.
+
+\section*{Reviewer 1}
+
+\comment{1.1 The 320-pixel configuration loses too much recall}{``The co-designed 320x320 configuration retains only 79.1\% macro-recall, exceeding the defined five-percentage-point safety loss limit despite being presented as an efficient candidate.''}
+We agree with the reviewer, and we no longer propose this configuration. Under the corrected protocol its recall is even lower. Its 32-bit floating-point (FP32) version already failed before quantization, so the loss comes from pruning at a reduced input size and not from INT8.
+
+To answer the question properly, Phase~III now tests the full grid of 24 INT8 configurations, which covers three input methods, two input sizes, and four pruning levels, each over three seeds. We report both what the validation data selects and what holds on the test drivers. The configuration chosen on validation failed on test, and we say this openly because it shows that three validation drivers are not enough to approve a heavily pruned, low-resolution model. We then rank all configurations by cost and recommend the cheapest one that holds the floor on test, which is the 160-pixel collage with 30\% pruning. It reaches 81.5\% macro-recall with about 24 times less compute than the baseline, but it clears the floor only narrowly. For this reason we also report the 320-pixel collage, which gives the highest recall of all configurations and still needs four times less compute than the baseline. Because the recommendation uses test results, we present it as a recommendation and not as a validated selection.
+\changes{Sections III-F and IV-C, Tables VII and VIII, Fig.~5, Abstract, and Conclusion.}
+
+\comment{1.2 Phase II and Phase III use different thresholds}{``Phase II selects confidence thresholds using validation macro-F1, whereas Phase III fixes the threshold at 0.5, making performance comparisons inconsistent.''}
+We agree that the two phases were inconsistent. All three phases now use one fixed threshold of 0.5 and the same matching rule. We chose a fixed threshold because the thresholds tuned on validation varied widely between configurations, so tuned results compared models at different operating points. We keep a tuned threshold only as a sensitivity check. While fixing this, we also found that the submitted Phase~II code read precision and recall at the best F1 point of the test set instead of at the chosen threshold, and that it computed mean average precision (mAP) on detections that were already filtered. Both errors are fixed, so all Phase~II results are new.
+\changes{Section III-C, Table VI, and Section IV-B.}
+
+\comment{1.3 Two different sizes for the same model}{``Table III reports a 1.31 MB checkpoint for 70\% PTQ pruning, while Table V reports 1.19 MB for the same compressed configuration.''}
+Both sizes were correct, but the paper did not explain the difference. The models are stored as ONNX (Open Neural Network Exchange) files with a fixed input shape, and such a file also stores anchor tables whose size grows with the input size. The two models used different input sizes, and this fully explains the gap, while the network weights had the same size. The revision explains this and now reports every model size from the same ONNX format. This also corrected the baseline size, which had been measured from a different file format.
+\changes{Section III-C, Tables IV, V, and VII, and Section IV-C.}
+
+\comment{1.4 PTQ and QAT use single seeds}{``PTQ and QAT results rely on single-seed experiments, unlike the three-seed baseline, making their reported performance differences difficult to assess reliably.''}
+PTQ and QAT now run on three seeds at every pruning level, like the baseline. The repeated runs showed a real problem, because PTQ recall changed strongly from one seed to another. The cause was the calibration method, which set the value ranges from rare extreme activations, and a moving-average calibration removed the problem. With this fix, INT8 recall stays close to FP32 recall up to 70\% pruning, and at that level QAT gives the smallest model with almost no loss of recall.
+\changes{Section III-D, Table V, Fig.~3, and Section IV-A.}
+
+\comment{1.5 Few test frames for the rare classes}{``The held-out test set contains only 33 yawning and 28 hand-over-mouth frames, making minority-class recall estimates highly sensitive to individual detection errors.''}
+We agree, and the real sample is even smaller, because these frames come from only five video clips per class and frames from one clip look very similar. The revision states this clearly and gives the clip counts of every split in Table~II. All confidence intervals now come from a bootstrap, which repeats the evaluation on many random resamples of the data. It resamples whole clips instead of single frames, and it compares each configuration with the baseline on the same resampled clips. Table~VIII gives these intervals for each class, and the limitation is discussed in the paper.
+\changes{Sections III-B and III-C, Tables II, VII, and VIII, and Limitations.}
+
+\comment{1.6 Equations, captions, conclusion, and proofreading}{``Ensure all equations are sequentially numbered and properly referenced. [\dots] Shorten and revise [captions]. [\dots] Revise the Conclusion into a single coherent paragraph [of] 200--250 words. Proofread the manuscript.''}
+We followed each point. All equations are numbered and cited in the text, and every caption is now one short line with any notes placed under the table. The Conclusion is a single paragraph within the 200 to 250 word limit. We also proofread the whole manuscript and corrected the grammar, two statements that did not match their tables, and one result that was wrongly marked as unsafe. Finally, we replaced the 3D plot with a clearer 2D chart.
+\changes{Throughout the manuscript.}
+
+\section*{Reviewer 2}
+
+\comment{2.1 How the framework differs from existing YOLO compression}{``Clearly distinguish the proposed model-input co-design framework from existing YOLO compression approaches and explain its specific methodological contributions.''}
+We added Section~III-A to explain the difference. Most YOLO compression work keeps the input fixed, compresses the network, and reports mAP. Our framework differs in three ways. First, it searches the input method, input size, pruning level, and quantization together, and it selects a configuration under one safety recall floor using validation data only. Second, it adapts the input first, so each model is trained on the input it will see before pruning starts. Third, it scores every input method on the same frames and boxes, so when the input step removes an object, that object counts as a missed detection. We also rewrote the contribution list and the research gap to match.
+\changes{Sections I, II-D, and III-A.}
+
+\comment{2.2 The subject-disjoint data split}{``Explain the subject-disjoint 8:3:3 data-splitting strategy and clarify how training, validation, and test data were used during pruning, quantization, and input-resolution selection.''}
+We split the data by subject because a driver monitoring system must work on drivers it has never seen. A random split by frame cannot test this, because neighboring frames of one driver look almost the same, so the model would be tested on near copies of its training images. The new Table~II lists the subjects, frames, clips, and class counts of each split, and the table below shows how each split is used. No split is used to choose the confidence threshold, because it is fixed.
+
+\begin{tabular}{@{}ll@{}}
+\toprule
+Split & Used for \\
+\midrule
+Train (8 drivers) & Training, fine-tuning after pruning, QAT, and PTQ calibration \\
+Validation (3 drivers) & Best checkpoint of each run, and the selection rule in (1) \\
+Test (3 drivers) & Reported results only \\
+\bottomrule
+\end{tabular}
+\changes{Section III-B and Table II.}
+
+\comment{2.3 The pruning procedure}{``Specify the structured L1-norm pruning procedure, including channel-ranking criteria, excluded layers, target sparsity, and whether each pruned model was fine-tuned before evaluation.''}
+Section~III-D now describes the full procedure, which we summarize here.
+\begin{itemize}
+\item \emph{Ranking:} we first rewrite each C3k2 block in an equivalent form so that its channels can be removed cleanly, and we test that this does not change the outputs. A dependency graph then groups the channels that must be removed together, and in each group we remove the channels whose filters have the smallest $\ell_1$ norm, which is the sum of their absolute weights.
+\item \emph{Excluded layers:} the detection head, the C2PSA attention block, and very small convolutions are never pruned.
+\item \emph{Pruning levels:} from 10\% to 90\% of the channels in steps of 10\%, applied in one step to the trained baseline.
+\item \emph{Fine-tuning:} every pruned model is fine-tuned for 100 epochs with the baseline settings before evaluation. We also corrected the optimizer settings in the paper so that they match the ones that were actually used.
+\end{itemize}
+\changes{Sections III-B, III-D, and IV-A.}
+
+\comment{2.4 The PTQ and QAT implementations}{``Clarify the INT8 PTQ and QAT implementations by reporting calibration data, quantization schemes, training configurations, and the reasons for their substantially different recall results.''}
+\begin{minipage}{\linewidth}
+The table below summarizes both methods, and Section~III-D gives the full details.\par\smallskip
+\begin{tabular}{@{}lll@{}}
+\toprule
+ & PTQ & QAT \\
+\midrule
+Tool & ONNX Runtime, static quantization & NVIDIA ModelOpt through Ultralytics \\
+Weights & INT8, symmetric, per channel & INT8, symmetric, per channel \\
+Activations & Unsigned INT8, asymmetric & INT8, symmetric \\
+Value ranges & Moving average over 300 training frames & Set on training batches, then frozen \\
+Training & None & 5 epochs with a low learning rate \\
+Kept in floating point & Head output layers and box decoding & Same layers \\
+\bottomrule
+\end{tabular}
+\end{minipage}
+
+We found that the submitted QAT runs did not simulate quantization at all, so they were really a short fine-tune followed by PTQ. QAT is now real quantization-aware training. The different recall results had two causes. First, the original calibration let a few extreme activations set the value ranges, and this lowered the confidence of correct detections until many fell below the threshold. Second, the submitted pipeline also quantized the final class scores, so small rounding steps could push a detection across the threshold. We now use moving-average ranges and keep the output layers of the head in floating point, and with these changes both PTQ and QAT stay close to FP32 up to 70\% pruning.
+\changes{Section III-D, Table V, Fig.~3, and Section IV-A.}
+
+\comment{2.5 The choice of crop and collage}{``Justify the central 400 x 400 crop and overlapping-collage strategies, and explain how the selected input regions preserve critical visual cues for detecting yawning and hand-over-mouth behavior.''}
+Section~III-E now justifies both methods with statistics from the annotations, which we give in the new Table~III. We placed the crop window around the usual driver position in the camera view. It keeps every yawning and hand-over-mouth box at least half visible, and it also enlarges the face, which helps the model see the mouth at small input sizes. Its weakness is the edge of the frame, because drinking and phone-use objects often reach toward the door or the center console, and some of them leave the window completely. The collage avoids this by joining a full-height head strip with two tiles that cover the hand zones. The tiles overlap, so a hand near the mouth appears in two tiles. The results support this design, because the collage gives the highest recall at every input size down to 160 pixels, with the largest gain for yawning, while the crop helps yawning but loses phone use.
+\changes{Section III-E, Tables III and VI, Fig.~4, and Section IV-B.}
+
+\section*{Additional corrections}
+The audit also found smaller issues that the reviewers did not raise, and we fixed them for transparency.
+\begin{itemize}
+\item Collage tile fragments were scored as separate objects, and now every method is scored per object.
+\item Precision and standard deviation were computed differently in different phases, and now one convention is used everywhere.
+\item Compute at the smallest input is now measured at the size the network really runs.
+\item YOLO26n is now described by its actual changes, and all results use one pinned software version, because versions gave different results for the same weights.
+\item A 1280-pixel setting that was listed but never reported is removed.
+\end{itemize}
+
+Code, configurations, and all per-run results are available at \url{https://github.com/IamOumarIbrahim/pruning-missed-detection}, which reproduces every table and figure.
+
+\end{document}
