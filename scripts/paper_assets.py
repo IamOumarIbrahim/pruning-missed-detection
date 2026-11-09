@@ -183,41 +183,59 @@ def same(row, choice) -> bool:
 
 
 def table_codesign(p3: pd.DataFrame, p1: pd.DataFrame, uncertainty: pd.DataFrame, summary: dict) -> None:
-    keys = ["method", "resolution", "sparsity", "quant"]
-    rows = p3[p3.quant != "fp32"].merge(uncertainty, on=keys, how="left").sort_values(["gflops", "method"])
-    lines = []
-    for r in rows.itertuples():
-        tag = "S" if same(r, summary["selected"]) else ("R" if same(r, summary["recommended"]) else "")
-        cells = [METHOD[r.method] + (f"\\textsuperscript{{{tag}}}" if tag else ""), f"{r.resolution}",
-                 f"{r.sparsity}", f"{r.gflops:.2f}", f"{r.file_mb:.2f}", pct(r.val_macro_recall),
-                 f"{100 * r.val_delta:+.1f} ({100 * r.val_delta_low:+.1f})",
-                 pct(r.test_macro_recall, r.test_macro_recall_sd),
-                 f"{100 * r.delta:+.1f} ({100 * r.delta_low:+.1f}, {100 * r.delta_high:+.1f})",
-                 TICK if r.safe else CROSS]
-        line = " & ".join(cells) + r" \\"
-        lines.append(r"\rowcolor{black!8}" + line if tag else line)
+    """INT8 recall on the full grid: input method x resolution x sparsity, cost once per column."""
+    int8 = p3[p3.quant != "fp32"]
+    sparsities = sorted(int8.sparsity.unique())
     base = p1[(p1.arch == "yolo11n") & (p1.sparsity == 0) & (p1.quant == "fp32")].iloc[0]
-    lines.append(r"\midrule")
-    lines.append(f"Resize (FP32) & 640 & 0 & {base.gflops:.2f} & {base.fp32_mb:.2f} & {pct(base.val_macro_recall)} & "
-                 f"-- & {pct(base.test_macro_recall, base.test_macro_recall_sd)} & -- & {TICK} \\\\")
+    lines = []
+    for res in sorted(int8.resolution.unique(), reverse=True):
+        block = int8[int8.resolution == res]
+        cost = []
+        for sp in sparsities:
+            c = block[block.sparsity == sp]
+            cost.append(f"{c.gflops.iloc[0]:.2f} / {c.file_mb.iloc[0]:.2f}" if len(c) else "--")
+        lines.append(rf"\multicolumn{{2}}{{@{{}}l}}{{\textit{{{res} px}}: GFLOPs / MB}} & " + " & ".join(cost) + r" \\")
+        lines.append(r"\cmidrule(l){3-" + str(2 + len(sparsities)) + "}")
+        for method in ("baseline", "cropped", "collage"):
+            cells = []
+            for sp in sparsities:
+                c = block[(block.method == method) & (block.sparsity == sp)]
+                if c.empty:
+                    cells.append("--")
+                    continue
+                r = c.iloc[0]
+                text = f"{100 * r.test_macro_recall:.1f} $\\pm$ {100 * r.test_macro_recall_sd:.1f} {TICK if r.safe else CROSS}"
+                if same(r, summary["selected"]):
+                    text += r"\textsuperscript{S}"
+                if same(r, summary["recommended"]):
+                    text = r"\cellcolor{dmsaqua!22}\textbf{" + text + "}"
+                cells.append(text)
+            lines.append(f" & {METHOD[method]} & " + " & ".join(cells) + r" \\")
+        lines.append(r"\midrule")
+    lines.append(rf"\multicolumn{{2}}{{@{{}}l}}{{Baseline, 640 px, FP32}} & \multicolumn{{{len(sparsities)}}}{{l}}"
+                 rf"{{{100 * base.test_macro_recall:.1f} $\pm$ {100 * base.test_macro_recall_sd:.1f} at "
+                 rf"{base.gflops:.2f} GFLOPs / {base.fp32_mb:.2f} MB}} \\")
     body = "\n".join(lines)
-    write("table_codesign.tex", rf"""\begin{{table*}}[!t]
-\renewcommand{{\arraystretch}}{{0.9}}
-\caption{{Phase III INT8 PTQ candidates against the FP32 baseline at $\tau=0.5$}}
+    write("table_codesign.tex", colour_defs() + rf"""
+\begin{{table*}}[!t]
+\renewcommand{{\arraystretch}}{{0.95}}
+\caption{{Test macro-recall (\%) of INT8 PTQ models across input, resolution, and sparsity}}
 \label{{tab:codesign_study}}
 \centering
 \footnotesize
-\setlength{{\tabcolsep}}{{4pt}}
-\begin{{tabular}}{{@{{}}lrrrrccccc@{{}}}}
+\setlength{{\tabcolsep}}{{6pt}}
+\begin{{tabular}}{{@{{}}ll{"c" * len(sparsities)}@{{}}}}
 \toprule
- & & & & & \multicolumn{{2}}{{c}}{{Validation}} & \multicolumn{{2}}{{c}}{{Test}} & \\
-\cmidrule(lr){{6-7}}\cmidrule(lr){{8-9}}
-Input & Res. & Sparsity (\%) & GFLOPs & Size (MB) & $R$ (\%) & $\Delta R$ (low) & $R$ (\%) & $\Delta R$ (95\% CI) & Safe \\
+ & & \multicolumn{{{len(sparsities)}}}{{c}}{{Sparsity}} \\
+\cmidrule(l){{3-{2 + len(sparsities)}}}
+ & & {" & ".join(f"{sp}\\%" for sp in sparsities)} \\
 \midrule
 {body}
 \bottomrule
-\multicolumn{{10}}{{l}}{{$\Delta R$: paired clip-bootstrap difference from the baseline, in pp. S: selected on validation by (\ref{{eq:selection}}). R: recommended.}} \\
 \end{{tabular}}
+
+\smallskip
+{{\scriptsize Mean $\pm$ SD over three seeds. {TICK}: holds the {100 * summary["r_floor"]:.1f}\% floor. Shaded: the cheapest configuration that holds it. S: selected on validation by (\ref{{eq:selection}}).}}
 \end{{table*}}
 """)
 
@@ -256,29 +274,38 @@ def table_uncertainty(uncertainty: pd.DataFrame, p1: pd.DataFrame, p3: pd.DataFr
 """)
 
 
-def figure_codesign(p3: pd.DataFrame, p1: pd.DataFrame, floor: float) -> None:
-    plots = []
+def figure_codesign(p3: pd.DataFrame, p1: pd.DataFrame, floor: float, summary: dict) -> None:
+    """Recall against compute: one line per input and resolution, from 0% to 70% sparsity."""
     int8 = p3[p3.quant != "fp32"]
+    base = p1[(p1.arch == "yolo11n") & (p1.sparsity == 0) & (p1.quant == "fp32")].iloc[0]
+    rec = int8.merge(pd.DataFrame([summary["recommended"]]), on=["method", "resolution", "sparsity", "quant"]).iloc[0]
+    plots = []
     for method, colour, mark in (("baseline", "dmsblue", "*"), ("cropped", "dmsorange", "square*"),
                                  ("collage", "dmsaqua", "triangle*")):
-        f = int8[int8.method == method]
-        pts = " ".join(f"({r.gflops:.3f},{100 * r.test_macro_recall:.2f}) +- (0,{100 * r.test_macro_recall_sd:.2f})"
-                       for r in f.itertuples())
-        plots.append(rf"\addplot[only marks, color={colour}, mark={mark}, mark size=2.2pt, error bars/.cd, y dir=both, y explicit] coordinates {{{pts}}};")
-        plots.append(rf"\addlegendentry{{{METHOD[method]}}}")
-    base = p1[(p1.arch == "yolo11n") & (p1.sparsity == 0) & (p1.quant == "fp32")].iloc[0]
-    plots.append(rf"\addplot[only marks, color=black, mark=diamond*, mark size=2.6pt] coordinates {{({base.gflops:.3f},{100 * base.test_macro_recall:.2f})}};")
-    plots.append(r"\addlegendentry{Baseline FP32}")
-    plots.append(rf"\addplot[color=dmsink, dashed, line width=0.8pt, forget plot] coordinates {{(0.1,{100 * floor:.2f}) (10,{100 * floor:.2f})}};")
+        for res, style in ((320, "solid"), (160, "densely dashed")):
+            f = int8[(int8.method == method) & (int8.resolution == res)].sort_values("gflops")
+            if f.empty:
+                continue
+            plots.append(rf"\addplot[color={colour}, {style}, line width=0.8pt, mark={mark}, mark size=2.2pt"
+                         + ("" if res == 320 else ", forget plot") + rf"] coordinates {{{coords(f.gflops, 100 * f.test_macro_recall)}}};")
+            if res == 320:
+                plots.append(rf"\addlegendentry{{{METHOD[method]}}}")
+            unsafe = f[~f.safe]
+            if len(unsafe):
+                plots.append(rf"\addplot[only marks, color={colour}, mark={mark}, mark size=2.2pt, mark options={{fill=white}}, forget plot] coordinates {{{coords(unsafe.gflops, 100 * unsafe.test_macro_recall)}}};")
+    plots.append(rf"\addplot[only marks, color=black, mark=diamond*, mark size=3pt] coordinates {{({base.gflops:.3f},{100 * base.test_macro_recall:.2f})}};")
+    plots.append(r"\addlegendentry{Baseline}")
     write("fig_codesign.tex", colour_defs() + rf"""
 \begin{{tikzpicture}}
-\begin{{axis}}[width=0.95\columnwidth, height=5.2cm, xmode=log, log basis x=10, grid=major,
-  grid style={{line width=.2pt, draw=gray!30}}, tick label style={{font=\scriptsize}}, label style={{font=\small}},
-  xlabel={{GFLOPs}}, ylabel={{Test macro-recall (\%)}}, xmin=0.1, xmax=10, ymin=40, ymax=100,
-  legend pos=south east, legend cell align=left, legend style={{font=\scriptsize, draw=gray!50}},
-  error bars/error bar style={{line width=0.5pt, solid}},
-  error bars/error mark options={{line width=0.5pt, mark size=1.2pt, rotate=90}}]
+\begin{{axis}}[width=\columnwidth, height=6.0cm, xmode=log, log basis x=10, grid=major,
+  grid style={{line width=.2pt, draw=gray!25}}, tick label style={{font=\scriptsize}}, label style={{font=\small}},
+  xlabel={{Compute (GFLOPs, log scale)}}, ylabel={{Test macro-recall (\%)}}, xmin=0.1, xmax=12, ymin=40, ymax=100,
+  legend style={{font=\scriptsize, draw=none, fill=none, at={{(0.5,1.02)}}, anchor=south, legend columns=-1,
+  /tikz/every even column/.append style={{column sep=6pt}}}}, clip=false]
+\fill[dmsaqua!10] (axis cs:0.1,{100 * floor:.2f}) rectangle (axis cs:12,100);
+\draw[dmsink, dashed, line width=0.8pt] (axis cs:0.1,{100 * floor:.2f}) -- (axis cs:12,{100 * floor:.2f});
 {chr(10).join(plots)}
+\draw[black, line width=1pt] (axis cs:{rec.gflops:.3f},{100 * rec.test_macro_recall:.2f}) circle (5pt);
 \end{{axis}}
 \end{{tikzpicture}}
 """)
@@ -308,8 +335,7 @@ def figure_efficiency(p1: pd.DataFrame) -> None:
   tick label style={{font=\scriptsize}}, label style={{font=\small}},
   xlabel={{Target sparsity (\%)}}, ylabel={{$\text{{Eff}}_{{\text{{FLOPs}}}}$}},
   xmin=-3, xmax=93, ymin=0, xtick={{0,10,...,90}},
-  legend pos=north west, legend columns=2, legend cell align=left,
-  legend style={{font=\scriptsize, draw=gray!50}}]
+  legend style={{font=\scriptsize, draw=none, fill=none, at={{(0.5,1.02)}}, anchor=south, legend columns=2, /tikz/every even column/.append style={{column sep=6pt}}}}]
 {chr(10).join(plots)}
 \end{{axis}}
 \end{{tikzpicture}}
@@ -333,7 +359,7 @@ def figure_quant(p1: pd.DataFrame) -> None:
   tick label style={{font=\scriptsize}}, label style={{font=\small}},
   xlabel={{Target sparsity (\%)}}, ylabel={{Macro-recall (\%)}},
   xmin=-3, xmax=93, ymin=0, ymax=100, xtick={{0,10,...,90}},
-  legend pos=south west, legend cell align=left, legend style={{font=\scriptsize, draw=gray!50}},
+  legend style={{font=\scriptsize, draw=none, fill=none, at={{(0.5,1.02)}}, anchor=south, legend columns=-1, /tikz/every even column/.append style={{column sep=6pt}}}},
   error bars/error bar style={{line width=0.5pt, solid}},
   error bars/error mark options={{line width=0.5pt, mark size=1.2pt, rotate=90}}]
 {chr(10).join(plots)}
@@ -355,7 +381,7 @@ def figure_input(p2: pd.DataFrame, floor: float) -> None:
 \begin{{axis}}[width=0.95\columnwidth, height=5.0cm, xmode=log, log basis x=10, grid=major,
   grid style={{line width=.2pt, draw=gray!30}}, tick label style={{font=\scriptsize}}, label style={{font=\small}},
   xlabel={{GFLOPs}}, ylabel={{Macro-recall (\%)}}, xmin=0.1, xmax=10, ymin=60, ymax=100,
-  legend pos=south east, legend cell align=left, legend style={{font=\scriptsize, draw=gray!50}}]
+  legend style={{font=\scriptsize, draw=none, fill=none, at={{(0.5,1.02)}}, anchor=south, legend columns=-1, /tikz/every even column/.append style={{column sep=6pt}}}}]
 {chr(10).join(plots)}
 \end{{axis}}
 \end{{tikzpicture}}
@@ -381,7 +407,7 @@ def main():
     figure_efficiency(p1)
     figure_quant(p1)
     figure_input(p2, summary["r_floor"])
-    figure_codesign(p3, p1, summary["r_floor"])
+    figure_codesign(p3, p1, summary["r_floor"], summary)
 
 
 if __name__ == "__main__":

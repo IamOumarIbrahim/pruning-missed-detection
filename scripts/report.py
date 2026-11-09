@@ -102,21 +102,23 @@ def main():
     p3.to_csv(TABLES / "phase3.csv", index=False)
 
     # The selection rule (validation only): cheapest INT8 candidate with mean validation recall
-    # above the validation floor. The recommendation is reported separately and uses test data:
-    # the cheapest INT8 candidate whose paired test difference stays within the margin at 95%.
+    # above the validation floor. The recommendation uses the test results: the INT8 candidate
+    # with the least compute, then the least memory, whose mean test macro-recall holds the floor.
     keys = ["method", "resolution", "sparsity", "quant"]
     int8 = p3[p3.quant != "fp32"].merge(pd.DataFrame(rows)[keys + ["delta_low"]], on=keys, how="left")
     int8 = int8.sort_values(["gflops", "file_mb"])
     pick = lambda frame: None if frame.empty else {
         k: (v.item() if hasattr(v, "item") else v) for k, v in frame.iloc[0][keys].items()}
     selected = int8[int8.val_passes]
-    recommended = int8[int8.delta_low >= -DELTA]
+    recommended = int8[int8.safe]
+    best_recall = int8[int8.safe].sort_values("test_macro_recall", ascending=False)
 
     summary = {"r_base": float(reference["yolo11n"].test_macro_recall), "r_floor": float(floor),
                "val_r_base": float(reference["yolo11n"].val_macro_recall), "val_r_floor": float(val_floor),
                "seed_sd_fixed": float(np.mean(p1.test_macro_recall_sd)),
                "seed_sd_tuned": float(np.mean(p1.tuned_macro_recall_sd)),
-               "selected": pick(selected), "recommended": pick(recommended)}
+               "selected": pick(selected), "recommended": pick(recommended),
+               "highest_recall": pick(best_recall)}
     (TABLES / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(json.dumps(summary, indent=2))
 

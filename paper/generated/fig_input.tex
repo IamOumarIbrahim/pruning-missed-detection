@@ -6,7 +6,7 @@
 \begin{axis}[width=0.95\columnwidth, height=5.0cm, xmode=log, log basis x=10, grid=major,
   grid style={line width=.2pt, draw=gray!30}, tick label style={font=\scriptsize}, label style={font=\small},
   xlabel={GFLOPs}, ylabel={Macro-recall (\%)}, xmin=0.1, xmax=10, ymin=60, ymax=100,
-  legend pos=south east, legend cell align=left, legend style={font=\scriptsize, draw=gray!50}]
+  legend style={font=\scriptsize, draw=none, fill=none, at={(0.5,1.02)}, anchor=south, legend columns=-1, /tikz/every even column/.append style={column sep=6pt}}]
 \addplot[only marks, color=dmsblue, mark=*, mark size=2.2pt] coordinates {(0.144962,72.63) (0.402826,80.66) (1.61418,88.33) (6.50281,87.43)};
 \addlegendentry{Resize}
 \addplot[only marks, color=dmsorange, mark=square*, mark size=2.2pt] coordinates {(0.144962,75.72) (0.402826,82.35) (1.61418,84.72) (6.50281,81.51)};

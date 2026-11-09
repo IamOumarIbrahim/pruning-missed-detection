@@ -13,6 +13,12 @@
   },
   "recommended": {
     "method": "collage",
+    "resolution": 160,
+    "sparsity": 30,
+    "quant": "ptq"
+  },
+  "highest_recall": {
+    "method": "collage",
     "resolution": 320,
     "sparsity": 0,
     "quant": "ptq"

@@ -16,24 +16,29 @@ plt.rcParams.update({"font.size": 10, "axes.edgecolor": INK, "axes.labelcolor": 
                      "axes.grid": True, "grid.color": GRID, "grid.linewidth": 0.8, "figure.dpi": 150})
 
 
-def tradeoff(p1: pd.DataFrame, p3: pd.DataFrame, floor: float) -> None:
-    """Every INT8 co-design candidate: test recall against compute, with the safety floor."""
-    fig, ax = plt.subplots(figsize=(7.2, 3.8))
+def tradeoff(p1: pd.DataFrame, p3: pd.DataFrame, floor: float, recommended: dict) -> None:
+    """Every INT8 candidate against compute: the safe zone, and the cheapest point inside it."""
+    fig, ax = plt.subplots(figsize=(7.2, 4.0))
+    ax.axhspan(100 * floor, 100, color=AQUA, alpha=0.08, lw=0)
+    ax.axhline(100 * floor, color=INK, ls="--", lw=1)
     int8 = p3[p3.quant != "fp32"]
     for method, (label, colour, marker) in METHODS.items():
         f = int8[int8.method == method]
-        ax.errorbar(f.gflops, 100 * f.test_macro_recall, yerr=100 * f.test_macro_recall_sd, fmt=marker,
-                    color=colour, ms=7, mec="white", mew=1, elinewidth=1, capsize=2, label=label)
+        safe, unsafe = f[f.safe], f[~f.safe]
+        ax.plot(safe.gflops, 100 * safe.test_macro_recall, marker, color=colour, ms=8, mec="white", mew=1,
+                ls="none", label=label)
+        ax.plot(unsafe.gflops, 100 * unsafe.test_macro_recall, marker, color=colour, ms=7, mfc="white",
+                mew=1.5, ls="none")
     base = p1[(p1.arch == "yolo11n") & (p1.sparsity == 0) & (p1.quant == "fp32")].iloc[0]
-    ax.plot(base.gflops, 100 * base.test_macro_recall, "D", color=INK, ms=7, label="Baseline (FP32, 640 px)")
-    ax.axhline(100 * floor, color=INK, ls="--", lw=1)
-    ax.text(0.105, 100 * floor + 1, f"safety floor {100 * floor:.1f}%", color=INK, fontsize=9)
-    best = int8[(int8.method == "collage") & (int8.resolution == 320) & (int8.sparsity == 0)].iloc[0]
-    ax.annotate("collage 320 px, INT8\n92.9%, 4x less compute", (best.gflops, 100 * best.test_macro_recall),
-                xytext=(0.62, 96), fontsize=9, color=INK, arrowprops=dict(arrowstyle="-", color=INK, lw=0.8))
+    ax.plot(base.gflops, 100 * base.test_macro_recall, "D", color=INK, ms=7, ls="none",
+            label="Baseline")
+    rec = int8.merge(pd.DataFrame([recommended]), on=["method", "resolution", "sparsity", "quant"]).iloc[0]
+    ax.plot(rec.gflops, 100 * rec.test_macro_recall, "o", ms=17, mfc="none", mec=INK, mew=1.4, ls="none",
+            label="Recommended")
     ax.set_xscale("log")
-    ax.set(xlim=(0.1, 10), ylim=(40, 100), xlabel="GFLOPs (log scale)", ylabel="Test macro-recall (%)")
-    ax.legend(loc="lower right", frameon=False, fontsize=9)
+    ax.set(xlim=(0.1, 12), ylim=(40, 100), xlabel="Compute (GFLOPs, log scale)", ylabel="Test macro-recall (%)")
+    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=5, frameon=False, fontsize=9,
+              handletextpad=0.3, columnspacing=1.2)
     fig.tight_layout()
     fig.savefig(FIGURES / "tradeoff.png")
     plt.close(fig)
@@ -53,7 +58,8 @@ def calibration(p1: pd.DataFrame, legacy: pd.DataFrame) -> None:
                 color=AQUA, ms=6, elinewidth=1.2, capsize=3, label="INT8 PTQ, moving-average ranges")
     ax.set(xlim=(-4, 94), ylim=(0, 100), xticks=range(0, 100, 10), xlabel="Target sparsity (%)",
            ylabel="Test macro-recall (%)")
-    ax.legend(loc="lower left", frameon=False, fontsize=9)
+    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=3, frameon=False, fontsize=9,
+              handletextpad=0.3, columnspacing=1.2)
     fig.tight_layout()
     fig.savefig(FIGURES / "calibration.png")
     plt.close(fig)
@@ -62,9 +68,9 @@ def calibration(p1: pd.DataFrame, legacy: pd.DataFrame) -> None:
 def main():
     FIGURES.mkdir(parents=True, exist_ok=True)
     import json
-    floor = json.loads((TABLES / "summary.json").read_text())["r_floor"]
+    summary = json.loads((TABLES / "summary.json").read_text())
     p1, p3 = pd.read_csv(TABLES / "phase1.csv"), pd.read_csv(TABLES / "phase3.csv")
-    tradeoff(p1, p3, floor)
+    tradeoff(p1, p3, summary["r_floor"], summary["recommended"])
     legacy = pd.read_csv(ROOT / "docs" / "archive" / "legacy_results" / "runs_ptq_minmax_calibration.csv")
     calibration(p1, legacy)
     print("saved", *sorted(p.name for p in FIGURES.glob("*.png")))

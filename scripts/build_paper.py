@@ -84,20 +84,23 @@ def main():
 
     (BUILD / "old_text.tex").write_text(FLOAT.sub("", original), encoding="utf-8")
     (BUILD / "new_text.tex").write_text(FLOAT.sub(hold, flat), encoding="utf-8")
+    # --no-del leaves deleted text out of the diff, so it cannot break headings or lists.
     diff = subprocess.run(
         ["perl", str(LATEXDIFF), "--type=CFONT", "--subtype=SAFE", "--math-markup=whole",
-         "old_text.tex", "new_text.tex"],
+         "--append-safecmd=url", "--no-del", "--graphics-markup=none", "old_text.tex", "new_text.tex"],
         cwd=BUILD, check=True, capture_output=True, text=True, encoding="utf-8").stdout
+    # A removed word leaves its space behind, as in "word ." or "( word", so close those gaps.
+    head, text = diff.split(r"\begin{document}", 1)
+    text = re.sub(r"(?<=[\w%)\]}$]) +(?=[.,;:)](?:[\s~},.;:]|$))", "", text)
+    text = re.sub(r"(?<=\d\}\\DIFaddend:) +(\\DIFaddbegin(?:FL)? +\\DIFadd(?:FL)?\{\d)", r"\1", text)  # ratios: 8:3:3
+    text = re.sub(r"(?<!\\)\( +(?=[\w$\\])", "(", text)
+    text = re.sub(r" +(\\DIFaddbegin(?:FL)? +\\DIFadd(?:FL)?\{(?:[.,;:)]|\\%))", r"\1", text)
+    diff = head + r"\begin{document}" + text
     for i, body in enumerate(floats):
         if normalise(body) not in old_floats:
-            body = re.sub(r"(\\begin\{(?:table|figure)\*?\}(?:\[[^\]]*\])?)", r"\1\\color{blue}", body, count=1)
+            body = re.sub(r"(\\begin\{(?:table|figure)\*?\}(?:\[[^\]]*\])?)", r"\1\\color{blue}%", body, count=1)
         diff = diff.replace(f"\\DIFFLOAT{chr(ord('A') + i)}", body, 1)
     diff = drop_empty_items(diff)
-    # Hidden deletions must not change spacing: a control word eats the space after it, and a
-    # blank line inside deleted text would still end the paragraph.
-    diff = re.sub(r"(\\DIF(?:add|del)(?:begin|end)(?:FL)?) +(?=[A-Za-z0-9($])", r"\1{} ", diff)
-    diff = re.sub(r"\\DIFdelbegin.*?\\DIFdelend",
-                  lambda m: re.sub(r"\n[ \t]*\n", "\n", m.group(0)), diff, flags=re.DOTALL)
     diff = diff.replace(r"\begin{document}", HIGHLIGHT + r"\begin{document}", 1)
     (BUILD / "main_highlighted.tex").write_text(diff, encoding="utf-8")
     for leftover in ("old_text.tex", "new_text.tex"):

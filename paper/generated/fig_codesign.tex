@@ -3,20 +3,30 @@
 \definecolor{dmsaqua}{HTML}{1BAF7A}
 \definecolor{dmsink}{HTML}{52514E}
 \begin{tikzpicture}
-\begin{axis}[width=0.95\columnwidth, height=5.2cm, xmode=log, log basis x=10, grid=major,
-  grid style={line width=.2pt, draw=gray!30}, tick label style={font=\scriptsize}, label style={font=\small},
-  xlabel={GFLOPs}, ylabel={Test macro-recall (\%)}, xmin=0.1, xmax=10, ymin=40, ymax=100,
-  legend pos=south east, legend cell align=left, legend style={font=\scriptsize, draw=gray!50},
-  error bars/error bar style={line width=0.5pt, solid},
-  error bars/error mark options={line width=0.5pt, mark size=1.2pt, rotate=90}]
-\addplot[only marks, color=dmsblue, mark=*, mark size=2.2pt, error bars/.cd, y dir=both, y explicit] coordinates {(1.614,86.11) +- (0,0.95) (0.614,72.15) +- (0,3.67)};
+\begin{axis}[width=\columnwidth, height=6.0cm, xmode=log, log basis x=10, grid=major,
+  grid style={line width=.2pt, draw=gray!25}, tick label style={font=\scriptsize}, label style={font=\small},
+  xlabel={Compute (GFLOPs, log scale)}, ylabel={Test macro-recall (\%)}, xmin=0.1, xmax=12, ymin=40, ymax=100,
+  legend style={font=\scriptsize, draw=none, fill=none, at={(0.5,1.02)}, anchor=south, legend columns=-1,
+  /tikz/every even column/.append style={column sep=6pt}}, clip=false]
+\fill[dmsaqua!10] (axis cs:0.1,81.38) rectangle (axis cs:12,100);
+\draw[dmsink, dashed, line width=0.8pt] (axis cs:0.1,81.38) -- (axis cs:12,81.38);
+\addplot[color=dmsblue, solid, line width=0.8pt, mark=*, mark size=2.2pt] coordinates {(0.613942,72.15) (0.813619,78.65) (1.06308,79.59) (1.61418,86.11)};
 \addlegendentry{Resize}
-\addplot[only marks, color=dmsorange, mark=square*, mark size=2.2pt, error bars/.cd, y dir=both, y explicit] coordinates {(0.403,78.74) +- (0,3.35) (0.265,72.51) +- (0,0.72) (1.614,83.85) +- (0,1.69) (0.814,77.12) +- (0,7.07) (0.614,65.35) +- (0,5.26)};
+\addplot[only marks, color=dmsblue, mark=*, mark size=2.2pt, mark options={fill=white}, forget plot] coordinates {(0.613942,72.15) (0.813619,78.65) (1.06308,79.59)};
+\addplot[color=dmsblue, densely dashed, line width=0.8pt, mark=*, mark size=2.2pt, forget plot] coordinates {(0.152766,43.25) (0.202685,63.76) (0.265051,65.65) (0.402826,70.36)};
+\addplot[only marks, color=dmsblue, mark=*, mark size=2.2pt, mark options={fill=white}, forget plot] coordinates {(0.152766,43.25) (0.202685,63.76) (0.265051,65.65) (0.402826,70.36)};
+\addplot[color=dmsorange, solid, line width=0.8pt, mark=square*, mark size=2.2pt] coordinates {(0.613942,65.35) (0.813619,77.12) (1.06308,81.51) (1.61418,83.85)};
 \addlegendentry{Crop}
-\addplot[only marks, color=dmsaqua, mark=triangle*, mark size=2.2pt, error bars/.cd, y dir=both, y explicit] coordinates {(0.403,83.84) +- (0,4.77) (0.265,81.53) +- (0,4.32) (0.203,73.76) +- (0,4.81) (0.153,46.23) +- (0,2.51) (1.614,92.89) +- (0,0.19) (0.614,78.02) +- (0,0.89)};
+\addplot[only marks, color=dmsorange, mark=square*, mark size=2.2pt, mark options={fill=white}, forget plot] coordinates {(0.613942,65.35) (0.813619,77.12)};
+\addplot[color=dmsorange, densely dashed, line width=0.8pt, mark=square*, mark size=2.2pt, forget plot] coordinates {(0.152766,48.17) (0.202685,67.70) (0.265051,72.51) (0.402826,78.74)};
+\addplot[only marks, color=dmsorange, mark=square*, mark size=2.2pt, mark options={fill=white}, forget plot] coordinates {(0.152766,48.17) (0.202685,67.70) (0.265051,72.51) (0.402826,78.74)};
+\addplot[color=dmsaqua, solid, line width=0.8pt, mark=triangle*, mark size=2.2pt] coordinates {(0.613942,78.02) (0.813619,89.81) (1.06308,89.83) (1.61418,92.89)};
 \addlegendentry{Collage}
-\addplot[only marks, color=black, mark=diamond*, mark size=2.6pt] coordinates {(6.503,86.38)};
-\addlegendentry{Baseline FP32}
-\addplot[color=dmsink, dashed, line width=0.8pt, forget plot] coordinates {(0.1,81.38) (10,81.38)};
+\addplot[only marks, color=dmsaqua, mark=triangle*, mark size=2.2pt, mark options={fill=white}, forget plot] coordinates {(0.613942,78.02)};
+\addplot[color=dmsaqua, densely dashed, line width=0.8pt, mark=triangle*, mark size=2.2pt, forget plot] coordinates {(0.152766,46.23) (0.202685,73.76) (0.265051,81.53) (0.402826,83.84)};
+\addplot[only marks, color=dmsaqua, mark=triangle*, mark size=2.2pt, mark options={fill=white}, forget plot] coordinates {(0.152766,46.23) (0.202685,73.76)};
+\addplot[only marks, color=black, mark=diamond*, mark size=3pt] coordinates {(6.503,86.38)};
+\addlegendentry{Baseline}
+\draw[black, line width=1pt] (axis cs:0.265,81.53) circle (5pt);
 \end{axis}
 \end{tikzpicture}

@@ -54,7 +54,7 @@
 \maketitle
 
 \begin{abstract}
-Edge driver monitoring systems (DMS) must detect distraction and drowsiness cues in real time under tight compute and memory budgets. We study whether model compression and input preprocessing can be co-designed for this task without violating a safety recall floor. On the Driver Monitoring Dataset with a subject-disjoint split and four behavior classes, we evaluate structured $\ell_1$-norm channel pruning with 8-bit integer (INT8) post-training quantization (PTQ) and quantization-aware training (QAT) on YOLO11n and YOLO26n, and three input methods (resize, static crop, and overlapping collage) from 640 to 80 pixels. Every configuration is scored on the same frames and boxes at one confidence threshold, with macro-recall as the safety metric and clip-level bootstrap intervals over three seeds. YOLO11n holds the 5-point recall floor up to 70\% sparsity in FP32, PTQ, and QAT, and QAT brings the 70\% model to 1.29~MB at 84.8\% macro-recall against 86.4\% for the baseline. PTQ stayed stable across seeds only with moving-average range calibration. The overlapping collage gives the highest recall at every resolution down to 160 pixels, while the static crop removes 9\% of phone-use boxes. The collage at 320 pixels with INT8 PTQ reaches 92.9\% macro-recall at 1.61~GFLOPs and 3.0~MB, a $4.0\times$ compute and $3.4\times$ storage reduction, and exceeds the baseline by 6.5 points (95\% interval 0.9 to 13.6). Pruning on top of reduced inputs did not transfer from validation to test drivers: the validation-selected configuration fell to 73.8\%.
+Edge driver monitoring systems (DMS) must detect distraction and drowsiness in real time on small compute and memory budgets. We study whether model compression and input preprocessing can be co-designed for this task without violating a safety recall floor. On the Driver Monitoring Dataset with a subject-disjoint split, we combine structured $\ell_1$-norm channel pruning and 8-bit integer (INT8) quantization on YOLO11n and YOLO26n with three input methods (resize, static crop, and overlapping collage) from 640 to 80 pixels, and we score every configuration by macro-recall on the same frames and boxes over three seeds. YOLO11n holds the 5-point recall floor up to 70\% sparsity, and quantization-aware training (QAT) brings this model to 1.29~MB at 84.8\% macro-recall against 86.4\% for the baseline. The overlapping collage gives the highest recall at every resolution down to 160 pixels. The cheapest configuration that holds the floor is the 160-pixel collage with 30\% sparsity and INT8 post-training quantization (PTQ), which needs $24.5\times$ less compute and $4.8\times$ less storage but passes only narrowly. The 320-pixel collage with INT8 gives the highest recall, 92.9\%, at $4.0\times$ less compute. Heavier pruning at reduced input did not transfer from validation to test drivers.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -79,7 +79,29 @@ The main contributions of this paper are:
     \item A multi-seed study of $\ell_1$-norm pruning, INT8 PTQ, and true fake-quantized QAT on YOLO11n and YOLO26n, with clip-level confidence intervals for the small test set.
     \item A measured account of why INT8 detection recall becomes unstable when the output layers of the detection head are quantized, and how keeping them in floating point removes the instability.
 \end{itemize}
+The code, configurations, and per-run results that reproduce every table and figure are available at \url{https://github.com/IamOumarIbrahim/pruning-missed-detection}.
 
+
+\begin{table}[t]
+\caption{Coverage of prior work versus this paper}
+\label{tab:gap}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Work} & \textbf{Pruning} & \textbf{Quant.} & \textbf{RoI} & \textbf{DMS} & \textbf{Joint} \\
+\midrule
+Filter/channel pruning \cite{b9,b10,b11,b12} & $\checkmark$ & -- & -- & -- & -- \\
+Deep compression \cite{b8}                   & $\checkmark$ & $\checkmark$ & -- & -- & -- \\
+Quantization \cite{b13,b14}                  & -- & $\checkmark$ & -- & -- & -- \\
+Tiling / multi-scale RoI \cite{b18,b19}      & -- & -- & $\checkmark$ & -- & -- \\
+DMS / distraction \cite{b20,b21,b22}         & -- & -- & -- & $\checkmark$ & -- \\
+\midrule
+\textbf{This work} & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \section{Related Work}
 
@@ -104,26 +126,6 @@ Existing work treats compression, input-level optimization, and driver monitorin
     \item No prior work has selected pruning, quantization, and input preprocessing jointly under a recall constraint for DMS.
 \end{itemize}
 
-\begin{table}[t]
-\caption{Coverage of prior work versus this paper}
-\label{tab:gap}
-\centering
-\footnotesize
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{@{}lccccc@{}}
-\toprule
-\textbf{Work} & \textbf{Pruning} & \textbf{Quant.} & \textbf{RoI} & \textbf{DMS} & \textbf{Joint} \\
-\midrule
-Filter/channel pruning \cite{b9,b10,b11,b12} & $\checkmark$ & -- & -- & -- & -- \\
-Deep compression \cite{b8}                   & $\checkmark$ & $\checkmark$ & -- & -- & -- \\
-Quantization \cite{b13,b14}                  & -- & $\checkmark$ & -- & -- & -- \\
-Tiling / multi-scale RoI \cite{b18,b19}      & -- & -- & $\checkmark$ & -- & -- \\
-DMS / distraction \cite{b20,b21,b22}         & -- & -- & -- & $\checkmark$ & -- \\
-\midrule
-\textbf{This work} & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ \\
-\bottomrule
-\end{tabular}
-\end{table}
 
 
 \section{Methodology}
@@ -235,7 +237,7 @@ Each input method is applied to the $640\times640$ frame and resized bilinearly 
 
 \subsection{Joint Co-Design}
 \label{sec:codesign}
-Phase~III evaluates 13 INT8 candidates: resize at 320 pixels with 0\% and 70\% sparsity, crop at 320 pixels with 0\%, 50\%, and 70\%, crop at 160 pixels with 0\% and 30\%, collage at 320 pixels with 0\% and 70\%, and collage at 160 pixels with 0\%, 30\%, 50\%, and 70\%. Each candidate starts from the Phase~II checkpoint trained on its input, is pruned as in Section~\ref{sec:pruning}, fine-tuned for up to 50 epochs with a patience of 10, and quantized. Fine-tuning is shorter than in Phase~I because the source model has already converged on the same input. The selection rule (\ref{eq:selection}) picks the candidate on validation data, and test results are reported once. Because validation is small, we also check non-inferiority on test: the paired difference from the baseline, $\Delta R$, must keep its 95\% lower bound above $-\delta$. The cheapest INT8 candidate that meets this is reported as the recommended configuration.
+Phase~III evaluates the full grid of 24 INT8 candidates: the three input methods at 320 and 160 pixels, each at 0\%, 30\%, 50\%, and 70\% sparsity. Each candidate starts from the Phase~II checkpoint trained on its input, is pruned as in Section~\ref{sec:pruning}, fine-tuned for up to 50 epochs with a patience of 10, and quantized. Fine-tuning is shorter than in Phase~I because the source model has already converged on the same input. The selection rule (\ref{eq:selection}) picks the candidate on validation data, and test results are reported once. Because validation is small, we also rank all candidates by compute, then memory, and recommend the first whose mean test macro-recall holds the floor in (\ref{eq:floor}). Its paired difference from the baseline, $\Delta R$, and the clip-bootstrap interval are reported with it.
 
 
 \section{Results and Discussion}
@@ -297,29 +299,30 @@ Table~\ref{tab:accuracy} and Fig.~\ref{fig:input_methods} report Phase~II. Four 
 \begin{figure}[!t]
 \centering
 \input{generated/fig_codesign.tex}
-\caption{Test macro-recall of the INT8 candidates against compute (mean $\pm$ SD). The dashed line is the floor}
+\caption{Test macro-recall of every INT8 candidate against compute, with solid lines at 320 pixels and dashed lines at 160 pixels. The shaded band clears the floor, hollow markers fail it, and the ringed point is the recommended configuration}
 \label{fig:codesign}
 \end{figure}
 
 Table~\ref{tab:codesign_study}, Table~\ref{tab:uncertainty}, and Fig.~\ref{fig:codesign} report Phase~III. Four findings stand out.
 \begin{itemize}
-\item \emph{Pruning at reduced input.} Pruning hurts more when the input is small. At 70\% sparsity all three methods fail at 320 pixels (65.4\% to 78.0\%), although the same sparsity holds the floor at 640 pixels. On the 160-pixel collage, 30\% sparsity still holds (81.5\%), 50\% does not (73.8\%), and 70\% collapses (46.2\%).
+\item \emph{Pruning at reduced input.} Pruning hurts more when the input is small. At 320 pixels the collage holds the floor up to 50\% sparsity (89.8\%), the crop up to 30\% (81.5\%), and resize only unpruned (79.6\% at 30\%). At 70\% sparsity all three methods fail at 320 pixels (65.4\% to 78.0\%), although the same sparsity holds the floor at 640 pixels. At 160 pixels resize and crop fail even unpruned (70.4\% and 78.7\%). On the 160-pixel collage, 30\% sparsity still holds (81.5\%), 50\% does not (73.8\%), and 70\% collapses (46.2\%).
 \item \emph{Validation does not transfer.} The rule in (\ref{eq:selection}) selects the 160-pixel collage with 50\% sparsity, at 0.20~GFLOPs, which is 1.3~pp above the baseline on validation. On the test drivers it falls 12.6~pp below the baseline because yawning recall drops to 31.3\% (95\% interval 21\% to 47\%). Three validation subjects with about 30 frames per rare class cannot certify a configuration that changes both input scale and network width.
-\item \emph{Recommended configuration.} The cheapest candidate whose paired test difference stays within the 5~pp margin at 95\% confidence is the 320-pixel collage with INT8 PTQ. It reaches $92.9\pm0.2\%$ macro-recall at 1.61~GFLOPs and 3.01~MB, which is $4.0\times$ less compute and $3.4\times$ less storage than the FP32 ONNX baseline. It exceeds the baseline by 6.5~pp (95\% interval 0.9 to 13.6~pp), and every class keeps at least 82.6\% recall. Because this choice uses test results, we report it as a recommendation and not as a validated selection.
-\item \emph{Cheaper options.} The 160-pixel collage with INT8 holds the floor on average (83.8\%, 0.40~GFLOPs, $16\times$ less compute), but its interval crosses the margin. It needs more validation drivers before deployment.
+\item \emph{Recommended configuration.} Table~\ref{tab:codesign_study} ranks every candidate by compute, then memory, and Fig.~\ref{fig:codesign} shows the same ranking against the floor. Every candidate cheaper than 0.27~GFLOPs fails. The first that holds the floor is the 160-pixel collage with 30\% sparsity and INT8 PTQ: $81.5\pm4.3\%$ macro-recall at 0.27~GFLOPs and 2.10~MB, which is $24.5\times$ less compute and $4.8\times$ less storage than the FP32 ONNX baseline. It is the least costly configuration this study supports, not a comfortable one: it clears the floor by 0.1~pp, its 95\% interval spans 69.5\% to 88.5\%, and yawning recall falls to 49.5\%.
+\item \emph{More recall for more compute.} The unpruned 160-pixel collage with INT8 holds 83.8\% at 0.40~GFLOPs and 2.98~MB. Pruning the 320-pixel collage to 50\% keeps $89.8\pm0.5\%$ at 0.81~GFLOPs and 1.70~MB ($8.0\times$ less compute), and stays above the floor under the stricter visibility rule (86.8\%) and the tuned threshold (86.7\%). The 320-pixel collage with INT8 gives the highest recall, $92.9\pm0.2\%$ at 1.61~GFLOPs and 3.01~MB ($4.0\times$ less compute), 6.5~pp above the baseline (95\% interval 0.9 to 13.6~pp), with every class at 82.6\% or more. It is the choice when the margin matters more than the last factor of compute.
 \end{itemize}
 
-Two further checks support these results. A validation-tuned threshold gives 89.4\% for the recommended configuration and 72.3\% for the selected one, so neither conclusion depends on $\tau=0.5$. The two INT8 sizes in the first submission, 1.31 and 1.19~MB for one network, differ only by the anchor tables that a fixed-shape graph stores: 0.128~MB at 640 pixels and 0.032~MB at 320 pixels.
+Two further checks qualify these results. The recommended configuration falls just below the floor under the stricter visibility rule (79.3\%) and under a validation-tuned threshold (80.0\%), so its pass at $\tau=0.5$ is narrow. The 320-pixel collage keeps 91.1\% and 89.4\% under the same checks, and the selected 50\% configuration fails under both. Because the recommendation uses test results, we report it as a recommendation and not as a validated selection. The two INT8 sizes in the first submission, 1.31 and 1.19~MB for one network, differ only by the anchor tables that a fixed-shape graph stores: 0.128~MB at 640 pixels and 0.032~MB at 320 pixels.
 
 \subsection{Limitations and Future Work}
 \label{sec:limitations}
-The test set holds three drivers, and the rare classes come from five clips each. Our intervals account for this, but they are wide, and the failed selection in Phase~III shows that three validation drivers are not enough to certify a pruned low-resolution model. We did not measure latency, power, or memory on automotive microcontrollers or neural processing units, where INT8 support and memory hierarchies change the realized gains. The detection head keeps floating-point output layers, which an integer-only accelerator would have to handle. QAT ran for five epochs, and the RoI geometry assumes a fixed camera mount. Future work should add drivers and cabins, repeat the selection with cross-validation over subjects, and measure the recommended pipeline on target hardware.
+The test set holds three drivers and each rare class comes from five clips, so our intervals are wide, and the failed selection in Phase~III shows that three validation drivers cannot certify a pruned low-resolution model. We did not measure latency, power, or memory on automotive hardware, where INT8 support changes the real gains, and an integer-only accelerator would also have to run the floating-point head outputs. The crop and collage also assume a fixed camera mount. Future work should add drivers and cabins, select configurations with cross-validation over subjects, and measure the recommended pipeline on target hardware.
 
 
 \section{Conclusion}
-This paper asked whether model compression and input preprocessing can be co-designed for edge driver monitoring without violating a safety recall floor. We evaluated structured $\ell_1$-norm pruning with INT8 post-training and quantization-aware training on YOLO11n and YOLO26n, and resize, crop, and overlapping collage inputs from 640 to 80 pixels, using one protocol on the same subject-disjoint frames and boxes. Three conclusions follow. First, the model side has real headroom at full resolution: YOLO11n holds the floor up to 70\% sparsity, and INT8 keeps that recall at 1.3 to 1.5~MB once ranges are calibrated with a moving average rather than raw extremes. Second, the input side matters as much as the model: the overlapping collage gives the highest recall at every resolution down to 160 pixels, while a static crop discards peripheral cues such as phone use. Third, the levers do not compound freely. The 320-pixel collage with INT8 reaches 92.9\% macro-recall at $4.0\times$ less compute and $3.4\times$ less storage than the baseline, but adding pruning at reduced input broke the transfer from validation to test drivers, and the validation-selected configuration fell to 73.8\%. Input reshaping and quantization are therefore the safer path for edge DMS, while aggressive pruning at low resolution needs larger, multi-driver validation. Our evidence comes from three test drivers and a desktop GPU, so on-device measurement and wider driver coverage are the next steps.
+This paper asked whether model compression and input preprocessing can be co-designed for edge driver monitoring without violating a safety recall floor. We evaluated structured $\ell_1$-norm pruning with INT8 PTQ and QAT on YOLO11n and YOLO26n, together with resize, crop, and collage inputs from 640 to 80 pixels, under one protocol on the same subject-disjoint frames and boxes. Three conclusions follow. First, the model has real headroom at full resolution, because YOLO11n holds the floor up to 70\% sparsity and INT8 keeps that recall at 1.3 to 1.5~MB once ranges are calibrated with a moving average. Second, the input matters as much as the model, because the overlapping collage gives the highest recall at every resolution down to 160 pixels, while a static crop loses peripheral cues such as phone use. Third, the two levers combine well only in moderation. The cheapest configuration that holds the floor, a 160-pixel collage with 30\% sparsity and INT8, needs $24.5\times$ less compute than the baseline but passes only narrowly, while the 320-pixel collage with INT8 keeps 92.9\% recall at $4.0\times$ less compute. Heavier pruning at reduced input did not transfer from validation to test drivers, so input reshaping and quantization are the safer levers, and on-device tests with more drivers are the next step.
 
 
+\IEEEtriggeratref{13}
 \begin{thebibliography}{00}
 \bibitem{b1} J. Guo, W. Ouyang, and D. Xu, ``Multi-dimensional pruning: A unified framework for model compression,'' in \emph{Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2020, pp. 1508--1517.
 \bibitem{b2} A. Vina, ``Pruning and quantization in computer vision: A quick guide,'' Ultralytics Blog, Jul. 11, 2025. Accessed: Sep. 29, 2026. [Online]. Available: \url{https://www.ultralytics.com/blog/pruning-and-quantization-in-computer-vision-a-quick-guide}

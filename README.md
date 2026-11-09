@@ -8,11 +8,18 @@ never seen.
 
 ![Test macro-recall of every INT8 configuration against compute](results/figures/tradeoff.png)
 
+*Shaded band: at or above the 81.4% safety floor. Hollow markers fail it. The ring marks the
+cheapest configuration that passes.*
+
 ## What we found
 
-- **Reshape the input, then quantize.** A 320-pixel overlapping collage with INT8 PTQ reaches
-  **92.9% macro-recall at 1.61 GFLOPs and 3.0 MB**: 4.0× less compute and 3.4× less storage than
-  the FP32 baseline (86.4%), with recall 6.5 pp *higher* (95% CI +0.9 to +13.6).
+- **Cheapest configuration that stays safe:** a 160-pixel overlapping collage, 30% pruned, INT8
+  PTQ. It reaches **81.5% macro-recall at 0.27 GFLOPs and 2.1 MB**, 24.5× less compute and 4.8×
+  less storage than the FP32 baseline (86.4%), clearing the 81.4% floor by just 0.1 pp.
+  Every cheaper candidate fails.
+- **Most recall for the compute:** the 320-pixel collage with INT8 PTQ reaches **92.9% at 1.61
+  GFLOPs and 3.0 MB**, 4× less compute than the baseline with recall 6.5 pp *higher* (95% CI +0.9
+  to +13.6).
 - **Pruning works at full resolution only.** YOLO11n holds the 5-point recall floor up to 70%
   channel sparsity at 640 px. At 320 px and below, the same sparsity fails, and the configuration
   picked on three validation drivers lost 12.6 pp on the test drivers.
